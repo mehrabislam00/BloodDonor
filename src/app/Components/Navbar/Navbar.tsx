@@ -11,7 +11,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { label: "Find Donor", href: "/" },
+    { label: "Find Donor", href: "/Find_A_Doner" },
     { label: "Become a Donor", href: "/Become_A_Donor" },
     { label: "About", href: "/About" },
   ];
@@ -22,15 +22,24 @@ const Navbar = () => {
     <nav
       className="
         sticky top-0 z-50
-        border-b
-        border-b-[#E6E0DB]
-        bg-[#FDF9F6]
+        border-b border-[#E6E0DB]/80
+        bg-[#FDF9F6]/95
         backdrop-blur-xl
       "
     >
-      <div className="navbar container mx-auto min-h-[76px] px-4 sm:px-6">
-
-        {/* Logo */}
+      <div
+        className="
+          navbar
+          container
+          mx-auto
+          min-h-[76px]
+          w-full
+          px-4
+          sm:px-6
+          lg:px-8
+        "
+      >
+        {/* ==================== LOGO ==================== */}
         <div className="navbar-start">
           <Link
             href="/"
@@ -41,12 +50,14 @@ const Navbar = () => {
               flex
               items-center
               gap-2.5
-              transition-transform
-              duration-200
-              hover:scale-[1.03]
+              rounded-xl
+              transition-all
+              duration-300
+              ease-out
+              hover:-translate-y-[1px]
             "
           >
-            {/* Blood Drop Icon */}
+            {/* Blood Drop */}
             <span
               className="
                 relative
@@ -57,15 +68,33 @@ const Navbar = () => {
                 justify-center
               "
             >
+              {/* Soft glow */}
+              <span
+                className="
+                  absolute
+                  h-8
+                  w-8
+                  rounded-full
+                  bg-[#E2484D]/0
+                  blur-xl
+                  transition-all
+                  duration-500
+                  group-hover:bg-[#E2484D]/30
+                "
+              />
+
               <svg
                 viewBox="0 0 40 48"
                 className="
+                  relative
                   h-11
                   w-10
                   fill-[#E2484D]
-                  transition-transform
-                  duration-300
-                  group-hover:scale-105
+                  transition-all
+                  duration-500
+                  ease-out
+                  group-hover:scale-110
+                  group-hover:rotate-[-3deg]
                 "
                 aria-hidden="true"
               >
@@ -79,7 +108,7 @@ const Navbar = () => {
                   "
                 />
 
-                {/* Small white highlight */}
+                {/* Highlight */}
                 <path
                   d="
                     M13 28
@@ -94,21 +123,46 @@ const Navbar = () => {
               </svg>
             </span>
 
-            {/* Text Logo */}
-            <span className="text-xl font-bold tracking-[-0.04em]">
-              <span className="font-medium text-[#1B1615]">
+            {/* Logo Text */}
+            <span
+              className="
+                text-xl
+                font-bold
+                tracking-[-0.04em]
+                transition-all
+                duration-300
+              "
+            >
+              <span
+                className="
+                  font-medium
+                  text-[#1B1615]
+                  transition-colors
+                  duration-300
+                  group-hover:text-[#2B2523]
+                "
+              >
                 Blood
               </span>
-              <span className="font-medium text-[#E2484D]">
+
+              <span
+                className="
+                  font-medium
+                  text-[#E2484D]
+                  transition-colors
+                  duration-300
+                  group-hover:text-[#C9363C]
+                "
+              >
                 Donor
               </span>
             </span>
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
+        {/* ==================== DESKTOP NAVIGATION ==================== */}
         <div className="navbar-center hidden lg:flex">
-          <ul className="flex items-center gap-9">
+          <ul className="flex items-center gap-2">
             {navItems.map((item) => {
               const active = pathname === item.href;
 
@@ -119,16 +173,29 @@ const Navbar = () => {
                     className={`
                       group
                       relative
-                      inline-flex
-                      py-3
+                      flex
+                      items-center
+                      rounded-xl
+                      px-4
+                      py-2.5
                       text-sm
                       font-semibold
-                      transition-colors
-                      duration-200
+                      transition-all
+                      duration-300
+                      ease-out
+
                       ${
                         active
-                          ? "text-[#E2484D]"
-                          : "text-base-content/70 hover:text-[#E2484D]"
+                          ? `
+                            bg-[#FFE8E8]
+                            text-[#E2484D]
+                            shadow-sm
+                          `
+                          : `
+                            text-[#68625E]
+                            hover:bg-[#FFF0F0]
+                            hover:text-[#E2484D]
+                          `
                       }
                     `}
                   >
@@ -138,17 +205,20 @@ const Navbar = () => {
                     <span
                       className={`
                         absolute
-                        bottom-0
-                        left-0
+                        bottom-[5px]
+                        left-1/2
                         h-[2px]
+                        -translate-x-1/2
                         rounded-full
                         bg-[#E2484D]
                         transition-all
                         duration-300
+                        ease-out
+
                         ${
                           active
-                            ? "w-full opacity-100"
-                            : "w-0 opacity-0 group-hover:w-full group-hover:opacity-100"
+                            ? "w-5 opacity-100"
+                            : "w-0 opacity-0 group-hover:w-5 group-hover:opacity-100"
                         }
                       `}
                     />
@@ -159,23 +229,31 @@ const Navbar = () => {
           </ul>
         </div>
 
-        {/* Desktop Right */}
+        {/* ==================== DESKTOP ACTIONS ==================== */}
         <div className="navbar-end hidden gap-2.5 lg:flex">
           {/* Login */}
           <Link href="/signin">
             <Button
               variant="ghost"
               className="
-                rounded-lg
-                px-4
-                py-5
+                h-11
+                rounded-xl
+                border
+                border-transparent
+                px-5
                 text-sm
-                font-medium
+                font-semibold
                 text-[#1B1615]
                 transition-all
                 duration-300
-                hover:bg-red-100
+                ease-out
+
+                hover:-translate-y-[1px]
+                hover:border-[#E2484D]/10
+                hover:bg-[#FFE8E8]
                 hover:text-[#E2484D]
+
+                active:translate-y-0
                 active:scale-[0.98]
               "
             >
@@ -187,30 +265,48 @@ const Navbar = () => {
           <Link href="/signup">
             <Button
               className="
-                rounded-lg
-                border border-[#E2484D]/20
+                h-11
+                rounded-xl
+                border
+                border-[#E2484D]/20
                 bg-[#E2484D]
                 px-5
-                py-5
                 text-sm
-                font-medium
+                font-semibold
                 text-white
-                shadow-md
-                shadow-[#e9666a]
+
+                shadow-[0_6px_18px_rgba(226,72,77,0.18)]
+
                 transition-all
                 duration-300
-                hover:-translate-y-[1px]
+                ease-out
+
+                hover:-translate-y-[2px]
+                hover:border-[#D83E43]
                 hover:bg-[#D83E43]
+                hover:shadow-[0_10px_25px_rgba(226,72,77,0.28)]
+
                 active:translate-y-0
                 active:scale-[0.98]
+                active:shadow-sm
               "
             >
               Become a Donor
+              <span
+                className="
+                  ml-1
+                  transition-transform
+                  duration-300
+                  group-hover:translate-x-1
+                "
+              >
+                →
+              </span>
             </Button>
           </Link>
         </div>
 
-        {/* Mobile Hamburger */}
+        {/* ==================== MOBILE MENU BUTTON ==================== */}
         <div className="navbar-end lg:hidden">
           <button
             type="button"
@@ -219,21 +315,26 @@ const Navbar = () => {
             aria-expanded={isMenuOpen}
             className="
               flex
-              h-10
-              w-10
+              h-11
+              w-11
               items-center
               justify-center
-              rounded-lg
+              rounded-xl
+              border
+              border-transparent
               text-[#1B1615]
+
               transition-all
-              duration-200
-              hover:bg-red-100
+              duration-300
+
+              hover:border-[#E2484D]/10
+              hover:bg-[#FFE8E8]
               hover:text-[#E2484D]
+
               active:scale-95
             "
           >
             {isMenuOpen ? (
-              /* Close Icon */
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6"
@@ -249,7 +350,6 @@ const Navbar = () => {
                 />
               </svg>
             ) : (
-              /* Hamburger Icon */
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6"
@@ -269,7 +369,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ==================== MOBILE MENU ==================== */}
       <div
         className={`
           overflow-hidden
@@ -278,18 +378,19 @@ const Navbar = () => {
           bg-[#FDF9F6]
           transition-all
           duration-300
+          ease-out
           lg:hidden
+
           ${
             isMenuOpen
-              ? "max-h-[420px] opacity-100"
+              ? "max-h-[450px] opacity-100"
               : "max-h-0 border-t-0 opacity-0"
           }
         `}
       >
         <div className="container mx-auto px-4 py-4 sm:px-6">
-
           {/* Mobile Navigation */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
             {navItems.map((item) => {
               const active = pathname === item.href;
 
@@ -299,17 +400,25 @@ const Navbar = () => {
                   href={item.href}
                   onClick={closeMenu}
                   className={`
-                    rounded-lg
+                    rounded-xl
                     px-4
                     py-3
                     text-sm
-                    font-medium
+                    font-semibold
                     transition-all
-                    duration-200
+                    duration-300
+
                     ${
                       active
-                        ? "bg-red-100 text-[#E2484D]"
-                        : "text-[#1B1615] hover:bg-red-50 hover:text-[#E2484D]"
+                        ? `
+                          bg-[#FFE8E8]
+                          text-[#E2484D]
+                        `
+                        : `
+                          text-[#1B1615]
+                          hover:bg-[#FFF0F0]
+                          hover:text-[#E2484D]
+                        `
                     }
                   `}
                 >
@@ -320,7 +429,7 @@ const Navbar = () => {
           </div>
 
           {/* Mobile Actions */}
-          <div className="mt-3 flex gap-2 border-t border-[#E6E0DB] pt-3">
+          <div className="mt-4 flex gap-2.5 border-t border-[#E6E0DB] pt-4">
             <Link
               href="/signin"
               onClick={closeMenu}
@@ -329,13 +438,19 @@ const Navbar = () => {
               <Button
                 variant="ghost"
                 className="
+                  h-11
                   w-full
-                  rounded-lg
-                  py-5
+                  rounded-xl
+                  border
+                  border-[#1B1615]/10
                   text-sm
-                  font-medium
+                  font-semibold
                   text-[#1B1615]
-                  hover:bg-red-100
+                  transition-all
+                  duration-300
+
+                  hover:border-[#E2484D]/10
+                  hover:bg-[#FFE8E8]
                   hover:text-[#E2484D]
                 "
               >
@@ -350,18 +465,26 @@ const Navbar = () => {
             >
               <Button
                 className="
+                  h-11
                   w-full
-                  rounded-lg
-                  border border-[#E2484D]/20
+                  rounded-xl
+                  border
+                  border-[#E2484D]/20
                   bg-[#E2484D]
-                  py-5
                   text-sm
-                  font-medium
+                  font-semibold
                   text-white
-                  shadow-sm
+
+                  shadow-[0_6px_18px_rgba(226,72,77,0.18)]
+
                   transition-all
                   duration-300
+
+                  hover:-translate-y-[1px]
                   hover:bg-[#D83E43]
+                  hover:shadow-[0_10px_22px_rgba(226,72,77,0.25)]
+
+                  active:translate-y-0
                 "
               >
                 Become a Donor
