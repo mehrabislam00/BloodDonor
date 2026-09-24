@@ -16,7 +16,7 @@ const UserCounter = () => {
 <div className="container mx-auto">
    {/* ── Badge ── */}
       <p className="mb-5 text-center text-[10.5px] font-semibold uppercase tracking-[0.20em] text-[#B5A89F]">
-        Prototype Statistics&nbsp;·&nbsp;Sample Data
+        Our Donor Community
       </p>
 
       {/* ── Grid ── */}

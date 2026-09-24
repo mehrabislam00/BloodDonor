@@ -21,7 +21,7 @@ const STEPS = [
 const Finding_A_donor = () => {
   return (
     <section className="w-full bg-[#faf4f0] px-6 py-16 sm:px-10 lg:px-16">
-      <div className="container mx-auto  px-10">
+      <div className="container mx-auto  px-6">
 
         {/* ── Heading ── */}
         <h2 className="text-[34px] font-extrabold leading-tight tracking-[-0.025em] text-[#1B1615] sm:text-6xl">
