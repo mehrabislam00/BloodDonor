@@ -269,7 +269,7 @@ export function HomeSearch() {
   };
 
   return (
-    <div className="w-full px-4 sm:px-6">
+    <div className="w-full px-4 sm:px-6 " >
       <div
         className="
           mx-auto w-full
@@ -277,8 +277,9 @@ export function HomeSearch() {
           border border-[#E7E0DB]
           bg-white
           px-5 py-5
-          shadow-[0_10px_30px_rgba(27,22,21,0.06)]
+          shadow-[0_30px_60px_rgba(27,22,21,0.14)]
           sm:px-7 sm:py-6
+          
         "
       >
         <form onSubmit={onSubmit} className="w-full">
