@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import heroImage from "@/app/Assets/hero.png";
 import { Button } from "@heroui/react";
+import { HomeSearch } from "../SearchField/HomeSearch";
 
 const Hero = () => {
   return (
@@ -222,6 +223,13 @@ const Hero = () => {
           </div>
         </div>
       </div>
+
+      
+      <div className="container mx-auto w-full pb-15">
+  <HomeSearch />
+</div>
+
+
     </section>
   );
 };
