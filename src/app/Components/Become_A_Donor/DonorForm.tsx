@@ -6,6 +6,7 @@ import {
   User, Mail, Phone, Droplets, MapPin,
   Calendar, Clock, CheckCircle, ArrowRight,
   Loader2, ShieldCheck, Users, Check, ChevronDown,
+  Camera, ImagePlus, X,
 } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────
@@ -17,7 +18,6 @@ const AREAS = [
   "Mohammadpur", "Banani", "Motijheel", "Farmgate",
 ];
 
-// ✅ Added "Available in 2 Months"
 const AVAILABILITY = [
   "Available Now",
   "Available in 1 Month",
@@ -26,7 +26,6 @@ const AVAILABILITY = [
   "Unavailable",
 ];
 
-// ✅ Added dot color for 2 months
 const AVAILABILITY_DOT: Record<string, string> = {
   "Available Now":         "bg-[#1A9E56]",
   "Available in 1 Month":  "bg-[#F59E0B]",
@@ -90,8 +89,6 @@ function CustomSelect({
 
   return (
     <div ref={ref} className="relative">
-
-      {/* ── Trigger ── */}
       <button
         type="button"
         onClick={toggle}
@@ -123,7 +120,6 @@ function CustomSelect({
         />
       </button>
 
-      {/* ── Dropdown panel ── */}
       {isOpen && (
         <div
           className={[
@@ -196,6 +192,150 @@ function Field({ label, icon: Icon, error, children }: {
   );
 }
 
+// ── ProfilePhotoUpload ────────────────────────────────────────────────────
+
+function ProfilePhotoUpload() {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFile(file);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = () => setIsDragging(false);
+
+  const remove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreview(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  return (
+    <div className="mb-2">
+      {/* Label row */}
+      <div className="mb-1.5 flex items-center gap-1.5">
+        <Camera size={12} strokeWidth={2.5} className="text-[#9E8E85]" />
+        <span className="text-[12.5px] font-semibold text-[#403A37]">
+          Profile Photo
+        </span>
+        <span className="ml-1 rounded-full bg-[#F5EFE9] px-2 py-0.5 text-[10.5px] font-medium text-[#9E8E85]">
+          Optional
+        </span>
+      </div>
+
+      {/* Subtitle */}
+      <p className="mb-3 text-[11.5px] leading-relaxed text-[#B5A89F]">
+        A photo helps people identify you as a donor. Recommended: clear face photo.
+      </p>
+
+      {/* Upload area */}
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        className={[
+          "relative flex cursor-pointer items-center gap-5 rounded-[14px] border-[1.5px] border-dashed p-5",
+          "transition-all duration-200",
+          isDragging
+            ? "border-[#E2484D] bg-[#FFF5F5] scale-[1.01]"
+            : preview
+              ? "border-[#E2484D]/30 bg-[#FFF9F9]"
+              : "border-[#DDD6D1] bg-[#FDFAF8] hover:border-[#E2484D]/40 hover:bg-[#FFF5F5]",
+        ].join(" ")}
+      >
+        {/* Avatar preview or placeholder */}
+        <div className="relative shrink-0">
+          {preview ? (
+            <>
+              <img
+                src={preview}
+                alt="Profile preview"
+                className="h-[72px] w-[72px] rounded-full object-cover ring-2 ring-[#E2484D]/20 shadow-md"
+              />
+              {/* Remove button */}
+              <button
+                type="button"
+                onClick={remove}
+                className="
+                  absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center
+                  rounded-full bg-[#E2484D] text-white shadow
+                  transition-transform duration-150 hover:scale-110
+                "
+              >
+                <X size={10} strokeWidth={3} />
+              </button>
+            </>
+          ) : (
+            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[#FFE4E4]">
+              <User size={28} strokeWidth={1.6} className="text-[#E2484D]/60" />
+            </div>
+          )}
+        </div>
+
+        {/* Right text */}
+        <div className="min-w-0 flex-1">
+          {preview ? (
+            <div>
+              <p className="text-[13px] font-semibold text-[#1B1615]">
+                Photo added
+              </p>
+              <p className="mt-0.5 text-[11.5px] text-[#9E8E85]">
+                Click to change or drag a new photo
+              </p>
+            </div>
+          ) : (
+            <div>
+              <div className="flex items-center gap-2">
+                <ImagePlus size={14} strokeWidth={2} className="shrink-0 text-[#E2484D]" />
+                <p className="text-[13px] font-semibold text-[#1B1615]">
+                  Upload a photo
+                </p>
+              </div>
+              <p className="mt-0.5 text-[11.5px] text-[#9E8E85]">
+                Click to browse or drag &amp; drop here
+              </p>
+              <p className="mt-1 text-[11px] text-[#C5B8B0]">
+                JPG, PNG or WEBP · max 5 MB
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Hidden input */}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onFileChange}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ── DonorForm ─────────────────────────────────────────────────────────────
 
 const DonorForm = () => {
@@ -246,7 +386,7 @@ const DonorForm = () => {
       : "border-[#E0D9D4] hover:border-[#E2484D]/30 focus:border-[#E2484D]/60 focus:ring-2 focus:ring-[#E2484D]/10 focus:shadow-sm",
   ].join(" ");
 
-  // ── Success ──────────────────────────────────────────────────────────
+  // ── Success state ─────────────────────────────────────────────────────
 
   if (isSuccess) {
     return (
@@ -285,7 +425,7 @@ const DonorForm = () => {
     );
   }
 
-  // ── Form ─────────────────────────────────────────────────────────────
+  // ── Form ──────────────────────────────────────────────────────────────
 
   return (
     <div className="w-full rounded-[22px] border border-[#EDE7E2] bg-white p-6 shadow-[0_20px_60px_rgba(27,22,21,0.09)] sm:p-8">
@@ -299,6 +439,12 @@ const DonorForm = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-1">
+
+        {/* ── Profile Photo ── */}
+        <ProfilePhotoUpload />
+
+        {/* ── Divider ── */}
+        <div className="my-3 border-t border-[#F0EAE5]" />
 
         {/* Full Name */}
         <Field label="Full Name" icon={User} error={errors.fullName}>
@@ -330,7 +476,6 @@ const DonorForm = () => {
               options={BLOOD_GROUPS}
               placeholder="Select blood group"
               hasError={!!errors.bloodGroup}
-              // ✅ Fix: Droplets icon in badge — text shown ONCE as label
               renderOption={(o) => (
                 <span className="flex items-center gap-3">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FFE4E4] text-[#E2484D]">
@@ -382,7 +527,7 @@ const DonorForm = () => {
             className={ic("lastDonationDate")} />
         </Field>
 
-        {/* Availability — ✅ now includes 2 months + styled dots */}
+        {/* Availability */}
         <Field label="Availability" icon={Clock} error={errors.availability}>
           <CustomSelect
             value={form.availability}

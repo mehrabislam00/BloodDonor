@@ -21,7 +21,7 @@ const STEPS = [
 const Finding_A_donor = () => {
   return (
     // ✅ No px here — padding lives on the inner container only
-    <section className="w-full bg-[#FAF7F4] py-16 sm:py-20">
+    <section className="w-full bg-[#faf4f0] py-16 sm:py-20">
 
       {/* ✅ Matches Hero container exactly */}
       <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
