@@ -27,12 +27,12 @@ const Finding_A_donor = () => {
       <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
 
         {/* ── Heading ── */}
-        <h2 className="text-[34px] font-extrabold leading-tight tracking-[-0.025em] text-[#1B1615] sm:text-[42px]">
+        <h2 className="text-3xl font-extrabold leading-tight tracking-[-0.025em] text-[#1B1615] sm:text-[42px]">
           Finding a donor is simple.
         </h2>
 
         {/* ✅ Fixed: was text-2xl (too big) */}
-        <p className="mt-2.5 text-[13.5px] leading-relaxed text-[#9E8E85]">
+        <p className="mt-2.5 text-[16.5px] leading-relaxed text-[#9E8E85]">
           Clear steps, current information, and direct contact when time matters.
         </p>
 
@@ -49,7 +49,7 @@ const Finding_A_donor = () => {
                 ].join(" ")}
               >
                 {/* ✅ Fixed: was text-3xl (too big) */}
-                <span className="text-[13px] font-bold tracking-wide text-[#E2484D]">
+                <span className="text-[16px] font-bold tracking-wide text-[#E2484D]">
                   {step.number}
                 </span>
 
@@ -59,7 +59,7 @@ const Finding_A_donor = () => {
                 </h3>
 
                 {/* ✅ Fixed: text-1xl is not valid Tailwind */}
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#9E8E85]">
+                <p className="mt-1.5 text-[15.5px] leading-relaxed text-[#9E8E85]">
                   {step.description}
                 </p>
               </div>
