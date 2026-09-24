@@ -6,7 +6,7 @@ import Link from "next/link";
 const Footer = () => {
   return (
     <footer className="w-full border-t border-[#E7E0DB] bg-[#faf4f0]">
-      <div className="container mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto w-full  px-4 sm:px-6 lg:px-15">
 
         {/* ── Main footer row ── */}
         <div className="grid grid-cols-1 gap-12 py-14 sm:py-16 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-24">

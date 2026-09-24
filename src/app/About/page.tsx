@@ -1,6 +1,6 @@
 import React from "react";
 import { Heart, Search, ShieldCheck } from "lucide-react";
-import Footer from "@/app/Components/Home/Footer/Footer";
+import Footer from "@/app/Components/Footer/Footer";
 
 // ── Feature data ──────────────────────────────────────────────────────────
 
@@ -35,10 +35,10 @@ const About = () => {
           Section 1 — Hero / Intro
       ══════════════════════════════════════════ */}
       <section className="w-full bg-[#f9f4f0] py-16 sm:py-24">
-        <div className="container mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto w-full  px-4 sm:px-6 lg:px-8">
 
           {/* Badge */}
-          <p className="mb-3 text-[13px] font-bold uppercase tracking-[0.16em] text-[#E2484D]">
+          <p className="mb-3 text-[13px] font-bold uppercase tracking-[0.16em] text-[#E2484D] pl-1">
             About Us
           </p>
 
@@ -53,8 +53,16 @@ const About = () => {
             for blood with available donors in Dhaka.
           </p>
 
-          {/* ── Divider + Features ── */}
-          <div className="mt-14 border-t border-[#E7E0DB]">
+       
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          Section 2 — Contact
+      ══════════════════════════════════════════ */}
+      <section className="w-full border-t border-[#E7E0DB] bg-[#FAF7F4] pb-16">
+{/* ── Divider + Features ── */}
+          <div className="mt-14 mb-14  container mx-auto w-full  px-4 sm:px-6 lg:px-8 ">
             <div className="grid grid-cols-1 gap-10 pt-10 sm:grid-cols-3 sm:gap-0">
               {FEATURES.map((feature, i) => {
                 const Icon = feature.icon;
@@ -62,7 +70,7 @@ const About = () => {
                   <div
                     key={feature.title}
                     className={[
-                      "flex flex-col gap-4",
+                      "flex flex-col gap-4 ",
                       i < FEATURES.length - 1
                         ? "sm:border-r sm:border-[#E7E0DB] sm:pr-10"
                         : "",
@@ -75,12 +83,12 @@ const About = () => {
                     </div>
 
                     {/* Title */}
-                    <h2 className="text-[15px] font-bold text-[#1B1615]">
+                    <h2 className="text-[20px] font-bold text-[#1B1615]">
                       {feature.title}
                     </h2>
 
                     {/* Description */}
-                    <p className="text-[13.5px] leading-relaxed text-[#9E8E85]">
+                    <p className="text-[15.5px] leading-relaxed text-[#9E8E85]">
                       {feature.description}
                     </p>
                   </div>
@@ -89,22 +97,16 @@ const About = () => {
             </div>
           </div>
 
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
-          Section 2 — Contact
-      ══════════════════════════════════════════ */}
-      <section className="w-full border-t border-[#E7E0DB] bg-[#FAF7F4] py-14 sm:py-16">
-        <div className="container mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto border-t border-[#E7E0DB] bg-[#FAF7F4] w-full  px-4 sm:px-6 lg:px-8 pt-10">
+          
 
           {/* Heading */}
-          <h2 className="text-[22px] font-bold text-[#1B1615]">
+          <h2 className="text-[20px] font-bold text-[#1B1615]">
             Contact
           </h2>
 
           {/* Body */}
-          <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[#9E8E85]">
+          <p className="mt-2 max-w-xl text-[15.5px] leading-relaxed text-[#9E8E85]">
             Questions about the{" "}
             <span className="text-[#E2484D]">platform</span>? Reach the
             BloodDonor community support team through the contact details

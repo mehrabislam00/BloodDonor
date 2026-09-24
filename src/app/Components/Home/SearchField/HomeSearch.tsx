@@ -1,202 +1,132 @@
-
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { Button } from "@heroui/react";
-import {
-  Search,
-  Loader2,
-  ChevronDown,
-  Check,
-} from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Search, Loader2, MapPin, Droplets, ChevronDown, Check } from "lucide-react";
 
-type SearchErrors = {
-  bloodGroup?: string;
-  area?: string;
-};
+// ── Constants ─────────────────────────────────────────────────────────────
 
-const bloodGroups = [
-  "A+",
-  "A-",
-  "B+",
-  "B-",
-  "AB+",
-  "AB-",
-  "O+",
-  "O-",
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const AREAS = [
+  "Dhanmondi", "Mirpur", "Uttara", "Gulshan",
+  "Mohammadpur", "Banani", "Motijheel", "Farmgate",
 ];
 
-const areas = [
-  "Dhanmondi",
-  "Mirpur",
-  "Uttara",
-  "Gulshan",
-  "Mohammadpur",
-  "Banani",
-  "Motijheel",
-  "Farmgate",
-];
+type SearchErrors = { bloodGroup?: string; area?: string };
 
-type CustomSelectProps = {
-  name: string;
-  label: string;
-  placeholder: string;
+// ── CustomSelect ──────────────────────────────────────────────────────────
+
+interface SelectProps {
   value: string;
+  onChange: (v: string) => void;
   options: string[];
-  error?: string;
-  onChange: (value: string) => void;
-};
+  placeholder: string;
+  hasError?: boolean;
+  renderOption: (o: string) => React.ReactNode;
+  renderValue:  (v: string) => React.ReactNode;
+}
 
 function CustomSelect({
-  name,
-  label,
-  placeholder,
-  value,
-  options,
-  error,
-  onChange,
-}: CustomSelectProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  value, onChange, options, placeholder,
+  hasError, renderOption, renderValue,
+}: SelectProps) {
+  const [isOpen,  setIsOpen]  = useState(false);
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const open = () => {
+    setIsOpen(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+  };
+  const close = () => {
+    setVisible(false);
+    setTimeout(() => setIsOpen(false), 180);
+  };
+  const toggle = () => (isOpen ? close() : open());
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
+    const onOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) close();
     };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
+    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    document.addEventListener("mousedown", onOutside);
+    document.addEventListener("keydown",   onEsc);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", onOutside);
+      document.removeEventListener("keydown",   onEsc);
     };
-  }, []);
+  });
 
   return (
-    <div ref={wrapperRef} className="relative min-w-0">
-      <label
-        className="
-          mb-2 block
-          text-[14px]
-          font-medium
-          leading-none
-          text-[#403A37]
-        "
-      >
-        {label}
-      </label>
+    <div ref={ref} className="relative w-full">
 
-      {/* Hidden input for FormData */}
-      <input type="hidden" name={name} value={value} />
-
-      {/* Trigger */}
+      {/* ── Trigger ── */}
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={`
-          flex h-[48px] w-full
-          items-center justify-between
-          rounded-[11px]
-          border
-          bg-white
-          px-4
-          text-left
-          text-[14px]
-          shadow-sm
-          outline-none
-          transition-all duration-200
-          ${
-            error
-              ? "border-[#E2484D] ring-2 ring-[#E2484D]/10"
-              : isOpen
-              ? "border-[#E2484D] ring-2 ring-[#E2484D]/10"
-              : "border-[#DDD6D1] hover:border-[#E2484D]/40"
-          }
-        `}
+        onClick={toggle}
+        className={[
+          "group w-full h-[48px] rounded-[11px] border bg-white px-4",
+          "flex items-center justify-between gap-2 cursor-pointer",
+          "text-[14px] outline-none transition-all duration-200",
+          hasError
+            ? "border-[#E2484D] ring-2 ring-[#E2484D]/10"
+            : isOpen
+              ? "border-[#E2484D]/70 ring-2 ring-[#E2484D]/10 shadow-sm"
+              : "border-[#DDD6D1] hover:border-[#E2484D]/40 hover:shadow-sm",
+          !value ? "text-[#B5A89F]" : "text-[#1B1615]",
+        ].join(" ")}
       >
-        <span
-          className={
-            value
-              ? "text-[#403A37]"
-              : "text-[#68625E]"
-          }
-        >
-          {value || placeholder}
+        <span className="truncate">
+          {value ? renderValue(value) : placeholder}
         </span>
-
         <ChevronDown
-          size={17}
-          strokeWidth={2}
-          className={`
-            shrink-0
-            text-[#68625E]
-            transition-transform duration-200
-            ${isOpen ? "rotate-180 text-[#E2484D]" : ""}
-          `}
+          size={16} strokeWidth={2}
+          className={[
+            "shrink-0 transition-all duration-300",
+            isOpen
+              ? "rotate-180 text-[#E2484D]"
+              : "text-[#9E8E85] group-hover:text-[#68625E]",
+          ].join(" ")}
         />
       </button>
 
-      {/* Dropdown */}
+      {/* ── Dropdown ── */}
       {isOpen && (
         <div
-          className="
-            absolute
-            left-0
-            right-0
-            top-[76px]
-            z-50
-            overflow-hidden
-            rounded-[13px]
-            border border-[#E7E0DB]
-            bg-white
-            p-1.5
-            shadow-[0_14px_35px_rgba(27,22,21,0.13)]
-            animate-in
-            fade-in
-            slide-in-from-top-1
-            duration-150
-          "
+          className={[
+            "absolute top-[calc(100%+6px)] left-0 right-0 z-50",
+            "rounded-[14px] border border-[#EDE7E2] bg-white overflow-hidden",
+            "shadow-[0_16px_48px_rgba(27,22,21,0.14)]",
+            "transition-all duration-[180ms] origin-top",
+            visible
+              ? "opacity-100 scale-y-100 translate-y-0"
+              : "opacity-0 scale-y-95 -translate-y-1",
+          ].join(" ")}
         >
-          <div className="max-h-[240px] overflow-y-auto">
+          <div className="max-h-[240px] overflow-y-auto py-1.5
+            [&::-webkit-scrollbar]:w-[4px]
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:bg-[#E7E0DB]
+          ">
             {options.map((option) => {
-              const selected = value === option;
-
+              const isSelected = value === option;
               return (
                 <button
                   key={option}
                   type="button"
-                  onClick={() => {
-                    onChange(option);
-                    setIsOpen(false);
-                  }}
-                  className={`
-                    flex w-full
-                    items-center justify-between
-                    rounded-[9px]
-                    px-3
-                    py-2.5
-                    text-left
-                    text-[14px]
-                    transition-all duration-150
-                    ${
-                      selected
-                        ? "bg-[#FFE9E9] font-medium text-[#E2484D]"
-                        : "text-[#403A37] hover:bg-[#FFF3F3] hover:text-[#E2484D]"
-                    }
-                  `}
+                  onClick={() => { onChange(option); close(); }}
+                  className={[
+                    "w-full flex items-center justify-between gap-3",
+                    "px-4 py-[10px] text-[13px] text-left",
+                    "transition-all duration-150 cursor-pointer",
+                    isSelected
+                      ? "bg-[#FFF0F0] text-[#E2484D] font-semibold"
+                      : "text-[#1B1615] hover:bg-[#FAF7F4] hover:pl-[22px]",
+                  ].join(" ")}
                 >
-                  <span>{option}</span>
-
-                  {selected && (
-                    <Check
-                      size={16}
-                      strokeWidth={2.5}
-                      className="text-[#E2484D]"
-                    />
+                  <span className="flex-1">{renderOption(option)}</span>
+                  {isSelected && (
+                    <Check size={14} strokeWidth={2.5} className="shrink-0 text-[#E2484D]" />
                   )}
                 </button>
               );
@@ -204,214 +134,169 @@ function CustomSelect({
           </div>
         </div>
       )}
-
-      {/* Error */}
-      <div className="mt-1 min-h-[16px]">
-        {error && (
-          <p className="text-[11px] leading-[16px] text-[#E2484D]">
-            {error}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
 
+// ── HomeSearch ────────────────────────────────────────────────────────────
+
 export function HomeSearch() {
+  const [bloodGroup,  setBloodGroup]  = useState("");
+  const [area,        setArea]        = useState("");
+  const [errors,      setErrors]      = useState<SearchErrors>({});
   const [isSearching, setIsSearching] = useState(false);
 
-  const [bloodGroup, setBloodGroup] = useState("");
-  const [area, setArea] = useState("");
+  const clearError = (key: keyof SearchErrors) =>
+    setErrors((e) => ({ ...e, [key]: undefined }));
 
-  const [errors, setErrors] = useState<SearchErrors>({});
-
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (isSearching) return;
 
     const newErrors: SearchErrors = {};
-
-    if (!bloodGroup) {
-      newErrors.bloodGroup =
-        "Please select a blood group.";
-    }
-
-    if (!area) {
-      newErrors.area =
-        "Please select an area.";
-    }
+    if (!bloodGroup) newErrors.bloodGroup = "Please select a blood group.";
+    if (!area)       newErrors.area       = "Please select an area.";
 
     setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) {
-      return;
-    }
+    if (Object.keys(newErrors).length > 0) return;
 
     setIsSearching(true);
-
     try {
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1800)
-      );
-
-      console.log({
-        bloodGroup,
-        area,
-      });
-
-      // router.push(
-      //   `/Find_A_Doner?bloodGroup=${bloodGroup}&area=${area}`
-      // );
+      await new Promise((r) => setTimeout(r, 1800));
+      console.log({ bloodGroup, area });
+      // router.push(`/Find_A_Doner?bloodGroup=${bloodGroup}&area=${area}`);
     } finally {
       setIsSearching(false);
     }
   };
 
   return (
-    <div className="w-full px-4 sm:px-6 " >
-      <div
-        className="
-          mx-auto w-full
-          rounded-[18px]
-          border border-[#E7E0DB]
-          bg-white
-          px-5 py-5
-          shadow-[0_30px_60px_rgba(27,22,21,0.14)]
-          sm:px-7 sm:py-6
-          
-        "
-      >
+    <div className="w-full px-4 sm:px-6">
+      <div className="
+        mx-auto w-full rounded-[18px]
+        border border-[#E7E0DB] bg-white
+        px-6 py-5 sm:px-8 sm:py-6
+        shadow-[0_10px_30px_rgba(27,22,21,0.06)]
+      ">
         <form onSubmit={onSubmit} className="w-full">
-          {/* Header */}
-          <div className="mb-5 flex items-center gap-2.5">
-            <div
-              className="
-                flex h-9 w-9 shrink-0
-                items-center justify-center
-                rounded-[11px]
-                bg-[#FFE9E9]
-                text-[#E2484D]
-              "
-            >
-              <Search
-                size={18}
-                strokeWidth={2}
-              />
-            </div>
 
-            <h2
-              className="
-                text-[16px]
-                font-bold
-                leading-none
-                tracking-[-0.02em]
-                text-[#1B1615]
-                sm:text-[17px]
-              "
-            >
+          {/* ── Header ── */}
+          <div className="mb-6 flex items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#FFE9E9] text-[#E2484D]">
+              <Search size={18} strokeWidth={2} />
+            </div>
+            <h2 className="text-[16px] font-bold leading-none tracking-[-0.02em] text-[#1B1615] sm:text-[17px]">
               Find a blood donor
             </h2>
           </div>
 
-          {/* Fields */}
-          <div
-            className="
-              grid w-full
-              grid-cols-1
-              gap-4
-              lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_172px]
-              lg:items-start
-              lg:gap-4
-            "
-          >
-            {/* Blood Group */}
-            <CustomSelect
-              name="bloodGroup"
-              label="Blood Group"
-              placeholder="Select group"
-              value={bloodGroup}
-              options={bloodGroups}
-              error={errors.bloodGroup}
-              onChange={(value) => {
-                setBloodGroup(value);
+          {/* ── Fields ── */}
+          <div className="
+            grid w-full grid-cols-1 gap-4
+            lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_176px]
+            lg:items-start
+          ">
 
-                if (errors.bloodGroup) {
-                  setErrors((prev) => ({
-                    ...prev,
-                    bloodGroup: undefined,
-                  }));
-                }
-              }}
-            />
+            {/* Blood Group */}
+            <div className="min-w-0">
+              <p className="mb-2 text-[13px] font-semibold text-[#403A37]">
+                Blood Group
+              </p>
+              <CustomSelect
+                value={bloodGroup}
+                onChange={(v) => { setBloodGroup(v); clearError("bloodGroup"); }}
+                options={BLOOD_GROUPS}
+                placeholder="Select group"
+                hasError={!!errors.bloodGroup}
+                renderOption={(o) => (
+                  <span className="flex items-center gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FFE4E4] text-[#E2484D]">
+                      <Droplets size={13} strokeWidth={2} />
+                    </span>
+                    <span className="font-medium">{o}</span>
+                  </span>
+                )}
+                renderValue={(v) => (
+                  <span className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#FFE4E4] text-[#E2484D]">
+                      <Droplets size={11} strokeWidth={2} />
+                    </span>
+                    {v}
+                  </span>
+                )}
+              />
+              <div className="h-5 pt-1">
+                {errors.bloodGroup && (
+                  <p className="text-[11px] font-medium text-[#E2484D]">
+                    ⚠ {errors.bloodGroup}
+                  </p>
+                )}
+              </div>
+            </div>
 
             {/* Area */}
-            <CustomSelect
-              name="area"
-              label="Area"
-              placeholder="Select area"
-              value={area}
-              options={areas}
-              error={errors.area}
-              onChange={(value) => {
-                setArea(value);
+            <div className="min-w-0">
+              <p className="mb-2 text-[13px] font-semibold text-[#403A37]">
+                Area
+              </p>
+              <CustomSelect
+                value={area}
+                onChange={(v) => { setArea(v); clearError("area"); }}
+                options={AREAS}
+                placeholder="Select area"
+                hasError={!!errors.area}
+                renderOption={(o) => (
+                  <span className="flex items-center gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F0EDEA] text-[#9E8E85]">
+                      <MapPin size={13} strokeWidth={2} />
+                    </span>
+                    <span className="font-medium">{o}</span>
+                  </span>
+                )}
+                renderValue={(v) => (
+                  <span className="flex items-center gap-2">
+                    <MapPin size={13} strokeWidth={2} className="shrink-0 text-[#9E8E85]" />
+                    {v}
+                  </span>
+                )}
+              />
+              <div className="h-5 pt-1">
+                {errors.area && (
+                  <p className="text-[11px] font-medium text-[#E2484D]">
+                    ⚠ {errors.area}
+                  </p>
+                )}
+              </div>
+            </div>
 
-                if (errors.area) {
-                  setErrors((prev) => ({
-                    ...prev,
-                    area: undefined,
-                  }));
-                }
-              }}
-            />
-
-            {/* Search Button */}
-            <div className="min-w-0 lg:pt-[22px]">
-              <Button
+            {/* Button */}
+            <div className="w-full lg:pt-[29px]">
+              <button
                 type="submit"
-                isDisabled={isSearching}
+                disabled={isSearching}
                 className="
-                  h-[48px] w-full
-                  rounded-[11px]
-                  border border-[#E2484D]
-                  bg-[#E2484D]
-                  px-5
-                  text-[14px]
-                  font-semibold
-                  text-white
+                  flex h-[48px] w-full items-center justify-center gap-2
+                  rounded-[11px] border border-[#E2484D] bg-[#E2484D]
+                  px-5 text-[14px] font-semibold text-white
                   shadow-[0_8px_20px_rgba(226,72,77,0.18)]
                   transition-all duration-300
-                  hover:-translate-y-[1px]
-                  hover:bg-[#D83E43]
-                  hover:shadow-[0_10px_25px_rgba(226,72,77,0.25)]
-                  active:translate-y-0
-                  disabled:cursor-not-allowed
-                  disabled:opacity-80
+                  hover:-translate-y-[1px] hover:bg-[#D83E43]
+                  hover:shadow-[0_12px_28px_rgba(226,72,77,0.28)]
+                  active:translate-y-0 active:scale-[0.99]
+                  disabled:cursor-not-allowed disabled:opacity-70
                 "
               >
                 {isSearching ? (
-                  <>
-                    <Loader2
-                      size={17}
-                      className="animate-spin"
-                    />
-                    Searching...
-                  </>
+                  <><Loader2 size={16} className="animate-spin" /><span>Searching…</span></>
                 ) : (
-                  <>
-                    <Search
-                      size={17}
-                      strokeWidth={2.2}
-                    />
-                    Search Donors
-                  </>
+                  <><Search size={16} strokeWidth={2.3} /><span>Search Donors</span></>
                 )}
-              </Button>
+              </button>
             </div>
+
           </div>
         </form>
       </div>
     </div>
   );
 }
-

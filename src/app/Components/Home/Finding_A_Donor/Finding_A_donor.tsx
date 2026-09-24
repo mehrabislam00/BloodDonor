@@ -20,14 +20,19 @@ const STEPS = [
 
 const Finding_A_donor = () => {
   return (
-    <section className="w-full bg-[#faf4f0] px-6 py-16 sm:px-10 lg:px-16">
-      <div className="container mx-auto  px-6">
+    // ✅ No px here — padding lives on the inner container only
+    <section className="w-full bg-[#FAF7F4] py-16 sm:py-20">
+
+      {/* ✅ Matches Hero container exactly */}
+      <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
 
         {/* ── Heading ── */}
-        <h2 className="text-[34px] font-extrabold leading-tight tracking-[-0.025em] text-[#1B1615] sm:text-6xl">
+        <h2 className="text-[34px] font-extrabold leading-tight tracking-[-0.025em] text-[#1B1615] sm:text-[42px]">
           Finding a donor is simple.
         </h2>
-        <p className="mt-2.5 text-2xl leading-relaxed text-[#9E8E85]">
+
+        {/* ✅ Fixed: was text-2xl (too big) */}
+        <p className="mt-2.5 text-[13.5px] leading-relaxed text-[#9E8E85]">
           Clear steps, current information, and direct contact when time matters.
         </p>
 
@@ -38,23 +43,23 @@ const Finding_A_donor = () => {
               <div
                 key={step.number}
                 className={[
-                  "pt-8 pr-8 ",
+                  "pt-8 pr-8",
                   i < STEPS.length - 1 ? "sm:border-r sm:border-[#E7E0DB]" : "",
-                  i > 0               ? "sm:pl-8"                           : "",
+                  i > 0                ? "sm:pl-8"                           : "",
                 ].join(" ")}
               >
-                {/* Step number */}
-                <span className="text-3xl font-bold tracking-wide text-[#E2484D]">
+                {/* ✅ Fixed: was text-3xl (too big) */}
+                <span className="text-[13px] font-bold tracking-wide text-[#E2484D]">
                   {step.number}
                 </span>
 
-                {/* Title */}
-                <h3 className="mt-3 text-3xl font-bold text-[#1B1615]">
+                {/* ✅ Fixed: was text-3xl (too big) */}
+                <h3 className="mt-3 text-[16px] font-bold text-[#1B1615]">
                   {step.title}
                 </h3>
 
-                {/* Description */}
-                <p className="mt-1.5 text-1xl leading-relaxed text-[#9E8E85]">
+                {/* ✅ Fixed: text-1xl is not valid Tailwind */}
+                <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#9E8E85]">
                   {step.description}
                 </p>
               </div>

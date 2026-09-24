@@ -232,7 +232,7 @@ const Navbar = () => {
         {/* ==================== DESKTOP ACTIONS ==================== */}
         <div className="navbar-end hidden gap-2.5 lg:flex">
           {/* Login */}
-          <Link href="/signin">
+          <Link href="/Login">
             <Button
               variant="ghost"
               className="
@@ -262,7 +262,7 @@ const Navbar = () => {
           </Link>
 
           {/* Become a Donor */}
-          <Link href="/signup">
+          <Link href="/Become_A_Donor">
             <Button
               className="
                 h-11
@@ -431,7 +431,7 @@ const Navbar = () => {
           {/* Mobile Actions */}
           <div className="mt-4 flex gap-2.5 border-t border-[#E6E0DB] pt-4">
             <Link
-              href="/signin"
+              href="/Login"
               onClick={closeMenu}
               className="flex-1"
             >
@@ -459,7 +459,7 @@ const Navbar = () => {
             </Link>
 
             <Link
-              href="/signup"
+              href="/Become_A_Donor"
               onClick={closeMenu}
               className="flex-1"
             >
