@@ -10,15 +10,17 @@ const STATS = [
 
 const UserCounter = () => {
   return (
-    <section className="w-full border-y-2 border-[#E6E0DB] bg-[#fcf8f5] px-4 py-6 sm:px-6  py-15">
+    <section className="w-full  border-y-2 border-[#E6E0DB] bg-[#fcf8f5] px-4  sm:px-6  py-20">
 
-      {/* ── Badge ── */}
+
+<div className="container mx-auto">
+   {/* ── Badge ── */}
       <p className="mb-5 text-center text-[10.5px] font-semibold uppercase tracking-[0.20em] text-[#B5A89F]">
         Prototype Statistics&nbsp;·&nbsp;Sample Data
       </p>
 
       {/* ── Grid ── */}
-      <div className="mx-auto w-full max-w-5xl border-y border-[#E7E0DB]">
+      <div className="mx-auto w-full  border-y border-[#E7E0DB]">
         <div className="grid grid-cols-2 lg:grid-cols-4">
           {STATS.map((stat, i) => (
             <div
@@ -55,6 +57,9 @@ const UserCounter = () => {
         </div>
       </div>
 
+
+</div>
+   
     </section>
   );
 };

@@ -87,7 +87,7 @@ const Hero = () => {
                 text-base
                 leading-7
                 text-[#68625E]
-                sm:text-lg
+                sm:text-2xl
                 sm:leading-8
               "
             >
@@ -184,10 +184,10 @@ const Hero = () => {
                 <div className="h-9 w-9 rounded-full border-2 border-[#FDF9F6] bg-[#E9878B]" />
               </div>
 
-              <p className="text-sm text-[#68625E]">
-                <span className="font-semibold text-[#1B1615]">
+              <p className="text-md text-[#68625E]">
+              
                   Local donors
-                </span>{" "}
+                
                 ready to help when it matters most
               </p>
             </div>
