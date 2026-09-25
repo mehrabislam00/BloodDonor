@@ -160,7 +160,7 @@ const LoginForm = () => {
         >
           {isSubmitting
             ? <><Loader2 size={16} className="animate-spin" /> Signing in…</>
-            : <>Sign In <ArrowRight size={16} strokeWidth={2.2} /></>}
+            : <>Login <ArrowRight size={16} strokeWidth={2.2} /></>}
         </button>
 
       </form>
