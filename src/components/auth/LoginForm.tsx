@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 function GoogleIcon() {
   return (
@@ -23,8 +25,10 @@ const normal = "border-[#E8E2DD] hover:border-[#E2484D]/30 focus:border-[#E2484D
 const errCls = "border-[#E2484D] ring-2 ring-[#E2484D]/10 bg-white";
 
 const LoginForm = () => {
+  const router = useRouter();
   const [form,         setForm]        = useState<FormData>({ email: "", password: "" });
   const [errors,       setErrors]      = useState<FormErrors>({});
+  const [authError,    setAuthError]   = useState("");
   const [showPw,       setShowPw]      = useState(false);
   const [isSubmitting, setIsSubmitting]= useState(false);
   const [isGoogle,     setIsGoogle]    = useState(false);
@@ -47,9 +51,23 @@ const LoginForm = () => {
     e.preventDefault();
     if (!validate() || isSubmitting) return;
     setIsSubmitting(true);
+    setAuthError("");
     try {
-      await new Promise((r) => setTimeout(r, 1800));
-      // TODO: supabase.auth.signInWithPassword({ email, password })
+      const { error } = await authClient.signIn.email({
+        email: form.email,
+        password: form.password,
+        callbackURL: "/",
+      });
+
+      if (error) {
+        setAuthError(error.message || "Unable to sign in. Check your credentials.");
+        return;
+      }
+
+      router.replace("/");
+      router.refresh();
+    } catch {
+      setAuthError("Unable to sign in. Please try again.");
     } finally { setIsSubmitting(false); }
   };
 
@@ -61,6 +79,7 @@ const LoginForm = () => {
       // TODO: supabase.auth.signInWithOAuth({ provider: "google" })
     } finally { setIsGoogle(false); }
   };
+
 
   const ic = (f: keyof FormData) => `${base} ${errors[f] ? errCls : normal}`;
 
@@ -145,6 +164,11 @@ const LoginForm = () => {
         </div>
 
         {/* Submit */}
+        {authError && (
+          <p role="alert" className="text-[12px] font-medium text-[#E2484D]">
+            {authError}
+          </p>
+        )}
         <button
           type="submit" disabled={isSubmitting}
           className="

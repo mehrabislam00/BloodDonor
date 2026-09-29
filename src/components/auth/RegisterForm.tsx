@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 function GoogleIcon() {
   return (
@@ -26,6 +28,7 @@ const normal = "border-[#E8E2DD] hover:border-[#E2484D]/30 focus:border-[#E2484D
 const errCls = "border-[#E2484D] ring-2 ring-[#E2484D]/10 bg-white";
 
 const RegisterForm = () => {
+  const router = useRouter();
   const [form,         setForm]        = useState<FormData>({
     firstName: "", lastName: "", email: "",
     password: "", confirmPassword: "", terms: false,
@@ -61,9 +64,27 @@ const RegisterForm = () => {
     if (!validate() || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await new Promise((r) => setTimeout(r, 1800));
-      // TODO: supabase.auth.signUp({ email, password })
-    } finally { setIsSubmitting(false); }
+      const { data, error } = await authClient.signUp.email({
+        name: `${form.firstName} ${form.lastName}`.trim(),
+        email: form.email,
+        password: form.password,
+        callbackURL: "/",
+      });
+
+      console.log("signup result:", { data, error });
+
+      if (error) {
+        console.error("signup error:", error);
+        return;
+      }
+
+      router.replace("/");
+      router.refresh();
+    } catch (err) {
+      console.error("signup exception:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleGoogle = async () => {
