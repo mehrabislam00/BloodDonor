@@ -66,7 +66,7 @@ const LoginPage = () => {
 
           <div className="flex flex-col gap-7">
             <div>
-              <p className="mb-3 text-[11px] font-bold tracking-[0.18em] text-[#E2484D]/80">DHAKA'S DONOR COMMUNITY</p>
+              <p className="mb-3 text-[11px] font-bold tracking-[0.18em] text-[#E2484D]/80">DHAKA&apos;S DONOR COMMUNITY</p>
               <h2 className="text-[44px] font-extrabold leading-[1.04] tracking-[-0.04em] text-white xl:text-[50px]">
                 Good to have<br />you back.
               </h2>

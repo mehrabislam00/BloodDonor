@@ -1,7 +1,6 @@
 import React from "react";
 import { Heart, Lock, Zap, ShieldCheck, Users } from "lucide-react";
 import DonorForm from "../Components/Become_A_Donor/DonorForm";
-import Footer from "../Components/Footer/Footer";
 
 
 const TRUST_POINTS = [
@@ -74,10 +73,7 @@ const Become_A_Donor = () => {
         </div>
       </div>
     </section>
- <Footer/>
     </>
-   
-    
   );
 };
 

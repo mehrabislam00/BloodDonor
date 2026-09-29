@@ -1,6 +1,5 @@
 import React from "react";
 import { Heart, Search, ShieldCheck } from "lucide-react";
-import Footer from "@/app/Components/Footer/Footer";
 
 // ── Feature data ──────────────────────────────────────────────────────────
 
@@ -116,8 +115,6 @@ const About = () => {
 
         </div>
       </section>
-
-      <Footer />
 
     </main>
   );

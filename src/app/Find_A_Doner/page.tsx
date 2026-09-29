@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { AlignJustify } from "lucide-react";
-import Footer from "../Components/Footer/Footer";
 import DonorCard from "../Components/DonorCard/DonorCard";
 import { DonorSearch } from "../Components/Find_A_Donor/DonorSearch";
 
@@ -317,8 +316,6 @@ const Find_A_Donor = () => {
 
         </div>
       </section>
-
-      <Footer />
 
     </main>
   );
