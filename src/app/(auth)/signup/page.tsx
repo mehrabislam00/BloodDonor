@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import RegisterForm from "../Components/Auth/RegisterForm";
-import { Droplets, Heart, ShieldCheck, Zap, MapPin, Users } from "lucide-react";
+import RegisterForm from "@/components/auth/RegisterForm";
+import { Droplets, ShieldCheck, MapPin, Heart } from "lucide-react";
 
 const STEPS = [
   { icon: ShieldCheck, title: "Create your profile",  body: "Fill in your blood group, area, and availability. Takes under 2 minutes." },

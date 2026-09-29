@@ -4,8 +4,8 @@
 import React from "react";
 import Link from "next/link";
 import { Button } from "@heroui/react";
-import { HomeSearch } from "../SearchField/HomeSearch";
-import { BloodDonorCards } from "./BloodDonorCards";   // ← new import
+import { HomeSearch } from "./HomeSearch";
+import { BloodDonorCards } from "./BloodDonorCards";
 
 // ── Hero ──────────────────────────────────────────────────────────────────
 const Hero = () => {
@@ -52,7 +52,7 @@ const Hero = () => {
 
             {/* Buttons */}
             <div className="mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-              <Link href="/Find_A_Doner" className="w-full sm:w-auto">
+              <Link href="/find-a-donor" className="w-full sm:w-auto">
                 <Button
                   className="
                     h-12 w-full min-w-42.5 rounded-xl border border-[#E2484D]
@@ -66,7 +66,7 @@ const Hero = () => {
                 </Button>
               </Link>
 
-              <Link href="/Become_A_Donor" className="w-full sm:w-auto">
+              <Link href="/become-a-donor" className="w-full sm:w-auto">
                 <Button
                   variant="ghost"
                   className="

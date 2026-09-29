@@ -107,7 +107,7 @@ const ForgotPasswordForm = () => {
 
         {/* Back to login */}
         <Link
-          href="/Login"
+          href="/login"
           className="
             flex h-[44px] w-full items-center justify-center gap-2
             rounded-[11px] border border-[#E0D9D4] bg-white
@@ -195,7 +195,7 @@ const ForgotPasswordForm = () => {
       {/* Back to login */}
       <div className="mt-3">
         <Link
-          href="/Login"
+          href="/login"
           className="
             flex h-[44px] w-full items-center justify-center gap-2
             rounded-[11px] border border-[#E0D9D4] bg-white
@@ -212,7 +212,7 @@ const ForgotPasswordForm = () => {
       <p className="mt-6 text-center text-[13px] text-[#9E8E85]">
         Don&apos;t have an account?{" "}
         <Link
-          href="/SignUp"
+          href="/signup"
           className="font-semibold text-[#E2484D] hover:text-[#C73E43] transition-colors"
         >
           Create an account

@@ -1,6 +1,6 @@
 import React from "react";
 import { Lock, KeyRound, ShieldCheck } from "lucide-react";
-import ForgotPasswordForm from "../Components/Auth/ForgotPasswordForm";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 
 
 const SECURITY_POINTS = [

@@ -149,10 +149,10 @@ const Footer = () => {
 
               <ul className="flex flex-col gap-2.5">
                 {[
-                  { label: "Find Donor", href: "/Find_A_Doner" },
-                  { label: "Become a Donor", href: "/Become_A_Donor" },
-                  { label: "About", href: "/About" },
-                  { label: "Login", href: "/Login" },
+                  { label: "Find Donor", href: "/find-a-donor" },
+                  { label: "Become a Donor", href: "/become-a-donor" },
+                  { label: "About", href: "/about" },
+                  { label: "Login", href: "/login" },
                 ].map(({ label, href }) => (
                   <li key={label}>
                     <Link

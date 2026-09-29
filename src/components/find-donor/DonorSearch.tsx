@@ -28,6 +28,7 @@ type SearchErrors = {
 interface SelectOption {
   value: string;
   label: string;
+  dot?: string;
 }
 
 interface SelectProps {

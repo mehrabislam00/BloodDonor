@@ -1,6 +1,6 @@
 import React from "react";
 import { Heart, Lock, Zap, ShieldCheck, Users } from "lucide-react";
-import DonorForm from "../Components/Become_A_Donor/DonorForm";
+import DonorForm from "@/components/donor/DonorForm";
 
 
 const TRUST_POINTS = [

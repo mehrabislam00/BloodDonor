@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import DonorCard, { type Donor } from "@/app/Components/DonorCard/DonorCard";
+import DonorCard, { type Donor } from "@/components/donor/DonorCard";
 
 const DONORS: Donor[] = [
   {
@@ -59,7 +59,7 @@ const AvailableDonors = () => {
 
           {/* View all button */}
           <Link
-            href="/Find_A_Doner"
+            href="/find-a-donor"
             className="
               flex h-[44px] shrink-0 items-center gap-1.5 self-start
               rounded-[12px] border border-[#E7E0DB] bg-white

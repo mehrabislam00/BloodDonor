@@ -11,9 +11,9 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { label: "Find Donor", href: "/Find_A_Doner" },
-    { label: "Become a Donor", href: "/Become_A_Donor" },
-    { label: "About", href: "/About" },
+    { label: "Find Donor", href: "/find-a-donor" },
+    { label: "Become a Donor", href: "/become-a-donor" },
+    { label: "About", href: "/about" },
   ];
 
   const closeMenu = () => setIsMenuOpen(false);
@@ -232,7 +232,7 @@ const Navbar = () => {
         {/* ==================== DESKTOP ACTIONS ==================== */}
         <div className="navbar-end hidden gap-2.5 lg:flex">
           {/* Login */}
-          <Link href="/Login">
+          <Link href="/login">
             <Button
               variant="ghost"
               className="
@@ -262,7 +262,7 @@ const Navbar = () => {
           </Link>
 
           {/* Become a Donor */}
-          <Link href="/Become_A_Donor">
+          <Link href="/become-a-donor">
             <Button
               className="
                 h-11
@@ -431,7 +431,7 @@ const Navbar = () => {
           {/* Mobile Actions */}
           <div className="mt-4 flex gap-2.5 border-t border-[#E6E0DB] pt-4">
             <Link
-              href="/Login"
+              href="/login"
               onClick={closeMenu}
               className="flex-1"
             >
@@ -459,7 +459,7 @@ const Navbar = () => {
             </Link>
 
             <Link
-              href="/Become_A_Donor"
+              href="/become-a-donor"
               onClick={closeMenu}
               className="flex-1"
             >

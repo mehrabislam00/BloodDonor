@@ -91,7 +91,7 @@ const WhyUs = () => {
           {/* Buttons */}
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
-              href="/Become_A_Donor"
+              href="/become-a-donor"
               className="
                 flex h-[42px] items-center rounded-[10px]
                 bg-white px-5 text-[13px] font-semibold text-[#E2484D]
@@ -104,7 +104,7 @@ const WhyUs = () => {
               Become a Donor
             </Link>
             <Link
-              href="/Find_A_Doner"
+              href="/find-a-donor"
               className="
                 flex h-[42px] items-center rounded-[10px]
                 border border-white/40 bg-white/10 px-5

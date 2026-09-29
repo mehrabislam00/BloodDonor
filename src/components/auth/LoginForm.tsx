@@ -168,7 +168,7 @@ const LoginForm = () => {
       {/* Register prompt */}
       <p className="mt-6 text-center text-[13px] text-[#9E8E85]">
         Don&apos;t have an account?{" "}
-        <Link href="/SignUp" className="font-semibold text-[#E2484D] hover:text-[#C73E43] transition-colors">
+        <Link href="/signup" className="font-semibold text-[#E2484D] hover:text-[#C73E43] transition-colors">
           Create an account
         </Link>
       </p>

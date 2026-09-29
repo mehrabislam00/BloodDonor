@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { AlignJustify } from "lucide-react";
-import DonorCard from "../Components/DonorCard/DonorCard";
-import { DonorSearch } from "../Components/Find_A_Donor/DonorSearch";
+import DonorCard, { type Donor } from "@/components/donor/DonorCard";
+import { DonorSearch } from "@/components/find-donor/DonorSearch";
 
 
 // ── Mock donor data ───────────────────────────────────────────────────────

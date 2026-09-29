@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import LoginForm from "../Components/Auth/LoginForm";
-import { Droplets, ShieldCheck, MapPin, Users, Heart } from "lucide-react";
+import LoginForm from "@/components/auth/LoginForm";
+import { Droplets, ShieldCheck, MapPin } from "lucide-react";
 
 const DONOR_CARDS = [
   { initials: "RH", name: "Rahim Hasan",   blood: "O+",  area: "Mirpur",      available: true  },
