@@ -34,6 +34,7 @@ const RegisterForm = () => {
     password: "", confirmPassword: "", terms: false,
   });
   const [errors,       setErrors]      = useState<FormErrors>({});
+  const [authError,    setAuthError]   = useState("");
   const [showPw,       setShowPw]      = useState(false);
   const [showCPw,      setShowCPw]     = useState(false);
   const [isSubmitting, setIsSubmitting]= useState(false);
@@ -87,11 +88,22 @@ const RegisterForm = () => {
 
   const handleGoogle = async () => {
     if (isGoogle) return;
+    setAuthError("");
     setIsGoogle(true);
     try {
-      await new Promise((r) => setTimeout(r, 1200));
-      // TODO: supabase.auth.signInWithOAuth({ provider: "google" })
-    } finally { setIsGoogle(false); }
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+
+      if (error) {
+        setAuthError(error.message || "Unable to continue with Google.");
+      }
+    } catch {
+      setAuthError("Unable to continue with Google. Please try again.");
+    } finally {
+      setIsGoogle(false);
+    }
   };
 
   const ic = (f: keyof FormData) => `${base} ${errors[f] ? errCls : normal}`;
@@ -232,6 +244,11 @@ const RegisterForm = () => {
         {errors.terms && <p className="-mt-1.5 text-[10.5px] font-medium text-[#E2484D]">⚠ {errors.terms}</p>}
 
         {/* Submit */}
+        {authError && (
+          <p role="alert" className="text-[12px] font-medium text-[#E2484D]">
+            {authError}
+          </p>
+        )}
         <button
           type="submit" disabled={isSubmitting}
           className="

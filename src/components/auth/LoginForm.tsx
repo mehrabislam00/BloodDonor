@@ -73,11 +73,22 @@ const LoginForm = () => {
 
   const handleGoogle = async () => {
     if (isGoogle) return;
+    setAuthError("");
     setIsGoogle(true);
     try {
-      await new Promise((r) => setTimeout(r, 1200));
-      // TODO: supabase.auth.signInWithOAuth({ provider: "google" })
-    } finally { setIsGoogle(false); }
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+
+      if (error) {
+        setAuthError(error.message || "Unable to continue with Google.");
+      }
+    } catch {
+      setAuthError("Unable to continue with Google. Please try again.");
+    } finally {
+      setIsGoogle(false);
+    }
   };
 
 
