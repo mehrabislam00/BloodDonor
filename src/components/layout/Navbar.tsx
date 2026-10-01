@@ -10,7 +10,11 @@ import {
   LogOut,
   ChevronDown,
   Droplets,
+  Loader2,
 } from "lucide-react";
+import { toast } from "@/components/toast/ui/toast";
+import { useProfileData } from "@/components/profile/ProfileDataProvider";
+import type { AuthSession } from "@/lib/auth-client";
 
 // ── Name cleanup ────────────────────────────────────────────────────────────────
 const getDisplayName = (raw: string | null | undefined): string => {
@@ -37,6 +41,7 @@ interface UserDropdownProps {
 const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserDropdownProps) => {
   const [isOpen,  setIsOpen]  = useState(false);
   const [visible, setVisible] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const ref                   = useRef<HTMLDivElement>(null);
   const router                = useRouter();
   const displayName           = getDisplayName(userName);
@@ -72,15 +77,29 @@ const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserD
   }, []);
 
   const handleLogout = async () => {
-    const { error } = await authClient.signOut();
-    if (error) {
-      console.error("Logout failed:", error);
-      return;
-    }
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      const { error } = await authClient.signOut();
+      if (error) {
+        console.error("Logout failed:", error);
+        toast.error({ title: "Logout Failed", description: "We couldn't sign you out. Please try again." });
+        return;
+      }
 
-    close();
-    router.replace("/login");
-    router.refresh();
+      toast.success({
+        title: "Logout Successful",
+        description: "You have been successfully signed out.",
+        duration: 5500,
+      });
+      close();
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      toast.error({ title: "Logout Failed", description: "We couldn't sign you out. Please try again." });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const menuItems = [
@@ -184,7 +203,7 @@ const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserD
             <Link
               href="/user-profile"
               onClick={close}
-              className="mx-3 mb-1 flex items-center justify-between rounded-[10px] bg-[#FFF5F5] px-3 py-2 text-[12px] font-semibold text-[#E2484D]"
+              className="mx-3 mb-2 mt-1 flex items-center justify-between rounded-[10px] bg-[#FFF5F5] px-4 py-2.5 text-[12px] font-semibold text-[#E2484D]"
             >
               <span>Complete Your Profile</span>
               <span>{profileCompletion}%</span>
@@ -228,15 +247,17 @@ const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserD
             <button
               type="button"
               onClick={handleLogout}
+              disabled={isLoggingOut}
               className="
                 group/logout flex w-full items-center gap-3
                 px-4 py-[10px]
                 text-[13px] font-medium text-[#C73E43]
                 transition-all duration-150
                 hover:bg-[#FFF0F0] hover:pl-[22px]
+                disabled:cursor-not-allowed disabled:opacity-60
               "
             >
-              <LogOut
+              {isLoggingOut ? <Loader2 size={15} className="animate-spin" /> : <LogOut
                 size={15}
                 strokeWidth={2}
                 className="
@@ -244,8 +265,8 @@ const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserD
                   transition-colors duration-150
                   group-hover/logout:text-[#E2484D]
                 "
-              />
-              Log out
+              />}
+              {isLoggingOut ? "Logging out..." : "Log out"}
             </button>
           </div>
         </div>
@@ -255,43 +276,18 @@ const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserD
 };
 
 // ── Navbar ──────────────────────────────────────────────────────────────────────
-const Navbar = () => {
+const Navbar = ({ initialSession }: { initialSession: AuthSession | null }) => {
   const pathname = usePathname();
   const router   = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [profileSummary, setProfileSummary] = useState({
-    isDonor: false,
-    profileCompletion: 100,
-  });
-
-  const { data: session, isPending } = useSession();
-  const userName  = session?.user.name?.trim() || session?.user.email?.split("@")[0] || null;
-  const userEmail = session?.user.email ?? null;
-
-  useEffect(() => {
-    if (!session?.user.id) {
-      return;
-    }
-
-    let active = true;
-    fetch("/api/profile")
-      .then(async (response) => {
-        if (!response.ok) return null;
-        return response.json();
-      })
-      .then((result) => {
-        if (!active || !result) return;
-        setProfileSummary({
-          isDonor: result.profile?.isDonor === true,
-          profileCompletion: typeof result.profileCompletion === "number"
-            ? result.profileCompletion
-            : 100,
-        });
-      })
-      .catch(() => undefined);
-
-    return () => { active = false; };
-  }, [pathname, session?.user.id]);
+  const [isMobileLoggingOut, setIsMobileLoggingOut] = useState(false);
+  const { profile, profileCompletion } = useProfileData();
+  const { data: clientSession, isPending } = useSession();
+  const session = isPending ? initialSession : clientSession;
+  const sessionPending = isPending && !initialSession;
+  const userName  = profile?.fullName.trim() || session?.user.name?.trim() || session?.user.email?.split("@")[0] || null;
+  const userEmail = profile?.email || session?.user.email || null;
+  const isDonor = profile?.isDonor === true;
 
   const navItems = [
     { label: "Find Donor",     href: "/find-a-donor"   },
@@ -302,15 +298,29 @@ const Navbar = () => {
   const closeMenu = () => setIsMenuOpen(false);
 
   const handleMobileLogout = async () => {
-    const { error } = await authClient.signOut();
-    if (error) {
-      console.error("Logout failed:", error);
-      return;
-    }
+    if (isMobileLoggingOut) return;
+    setIsMobileLoggingOut(true);
+    try {
+      const { error } = await authClient.signOut();
+      if (error) {
+        console.error("Logout failed:", error);
+        toast.error({ title: "Logout Failed", description: "We couldn't sign you out. Please try again." });
+        return;
+      }
 
-    closeMenu();
-    router.replace("/login");
-    router.refresh();
+      toast.success({
+        title: "Logout Successful",
+        description: "You have been successfully signed out.",
+        duration: 5500,
+      });
+      closeMenu();
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      toast.error({ title: "Logout Failed", description: "We couldn't sign you out. Please try again." });
+    } finally {
+      setIsMobileLoggingOut(false);
+    }
   };
 
   return (
@@ -416,7 +426,7 @@ const Navbar = () => {
 
         {/* ==================== DESKTOP ACTIONS ==================== */}
         <div className="navbar-end hidden gap-2.5 lg:flex">
-          {isPending ? (
+          {sessionPending ? (
             /* Loading skeleton */
             <div className="h-8 w-32 animate-pulse rounded-[10px] bg-[#F0EAE5]" />
           ) : session ? (
@@ -424,8 +434,8 @@ const Navbar = () => {
             <UserDropdown
               userName={userName}
               userEmail={userEmail}
-              isDonor={profileSummary.isDonor}
-              profileCompletion={profileSummary.profileCompletion}
+              isDonor={isDonor}
+              profileCompletion={profileCompletion}
             />
           ) : (
             /* ── Logged out: login button ── */
@@ -534,7 +544,7 @@ const Navbar = () => {
 
           {/* Mobile actions */}
           <div className="mt-4 border-t border-[#E6E0DB] pt-4">
-            {isPending ? null : session ? (
+            {sessionPending ? null : session ? (
               /* ── Logged in mobile ── */
               <div className="flex flex-col gap-2">
 
@@ -561,7 +571,7 @@ const Navbar = () => {
                 <div className="flex flex-col gap-1 rounded-xl border border-[#EDE7E2] bg-white py-1">
                   {[
                     { label: "My Profile",    icon: User,     href: "/user-profile"   },
-                    { label: "View Donor Profile", icon: Droplets, href: profileSummary.isDonor ? "/blood-donor-profile" : "/become-a-donor" },
+                    { label: "View Donor Profile", icon: Droplets, href: isDonor ? "/blood-donor-profile" : "/become-a-donor" },
                   ].map(({ label, icon: Icon, href }) => (
                     <Link
                       key={label}
@@ -584,16 +594,20 @@ const Navbar = () => {
                   <button
                     type="button"
                     onClick={handleMobileLogout}
+                    disabled={isMobileLoggingOut}
                     className="
                       flex items-center gap-3 px-4 py-3
                       text-[13.5px] font-medium text-[#C73E43]
                       transition-all duration-150
                       hover:bg-[#FFF0F0]
+                      disabled:cursor-not-allowed disabled:opacity-60
                     "
                     
                   >
-                    <LogOut size={15} strokeWidth={2} className="shrink-0 text-[#E2484D]/60" />
-                    Log out
+                    {isMobileLoggingOut
+                      ? <Loader2 size={15} className="animate-spin" />
+                      : <LogOut size={15} strokeWidth={2} className="shrink-0 text-[#E2484D]/60" />}
+                    {isMobileLoggingOut ? "Logging out..." : "Log out"}
                   </button>
                 </div>
 

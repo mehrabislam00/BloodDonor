@@ -129,3 +129,18 @@
     @apply font-sans;
     }
 }
+
+  @theme {
+    --animate-subtle-bob: subtle-bob 2s ease-in-out infinite;
+    --animate-subtle-bounce: subtle-bounce 1.2s ease-in-out infinite;
+
+    @keyframes subtle-bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    @keyframes subtle-bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-4px); opacity: 1; }
+    }
+  }

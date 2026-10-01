@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Eye, EyeOff, KeyRound, Loader2,
   LockKeyhole, ShieldCheck, CheckCircle,
 } from "lucide-react";
 import { changePassword } from "@/lib/auth-client";
+import { toast } from "@/components/toast/ui/toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -144,6 +145,7 @@ function Requirements({ password }: { password: string }) {
 // ── Main component ────────────────────────────────────────────────────────
 
 export default function ChangePasswordCard() {
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [form, setForm] = useState<PasswordFields>({
     currentPassword: "",
     newPassword:     "",
@@ -153,6 +155,25 @@ export default function ChangePasswordCard() {
   const [authError, setAuthError] = useState("");
   const [success,   setSuccess]   = useState(false);
   const [saving,    setSaving]    = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/auth/password-status", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (active && typeof data.hasPassword === "boolean") {
+          setHasPassword(data.hasPassword);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const update = (field: keyof PasswordFields) => (value: string) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -187,18 +208,44 @@ export default function ChangePasswordCard() {
       });
 
       if (error) {
-        setAuthError(error.message || "Unable to change your password.");
+        const message = error.message || "Unable to change your password.";
+        setAuthError(message);
+        toast.error({ title: "Password update failed", description: message });
         return;
       }
 
+      toast.success({ title: "Password changed", description: "Your password has been updated successfully." });
       setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setSuccess(true);
     } catch {
-      setAuthError("Unable to change your password. Please try again.");
+      const message = "Unable to change your password. Please try again.";
+      setAuthError(message);
+      toast.error({ title: "Password update failed", description: message });
     } finally {
       setSaving(false);
     }
   };
+
+  if (hasPassword === false) {
+    return (
+      <section className="rounded-[20px] border border-[#EDE7E2] bg-white p-6 shadow-[0_4px_20px_rgba(27,22,21,0.05)] sm:p-8">
+        <div className="flex items-start gap-3.5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FFF0F0] text-[#E2484D]">
+            <KeyRound size={19} strokeWidth={2} />
+          </div>
+          <div>
+            <h2 className="text-[16px] font-extrabold tracking-[-0.015em] text-[#1B1615]">
+              Password management
+            </h2>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-[#9E8E85]">
+              This account was created with Google sign-in, so it does not have a password to change.
+              You can continue using Google to sign in, or delete the account from this page.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-[20px] border border-[#EDE7E2] bg-white p-6 shadow-[0_4px_20px_rgba(27,22,21,0.05)] transition-all duration-200 hover:shadow-[0_8px_32px_rgba(27,22,21,0.08)] sm:p-8">

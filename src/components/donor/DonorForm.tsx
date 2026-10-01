@@ -9,6 +9,9 @@ import {
   Loader2, ShieldCheck, Users, Check, ChevronDown,
   Camera, ImagePlus, X, MessageCircle,
 } from "lucide-react";
+import { toast } from "@/components/toast/ui/toast";
+import { useProfileData } from "@/components/profile/ProfileDataProvider";
+import type { UserProfile } from "@/components/user-profile/types";
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -34,6 +37,26 @@ const AVAILABILITY_DOT: Record<string, string> = {
   "Available in 3 Months": "bg-[#F97316]",
   "Unavailable":           "bg-[#9E8E85]",
 };
+
+function getFormAvailability(availability: string) {
+  if (availability === "available" || availability === "Available Now") return "Available Now";
+  if (availability === "available-soon") return "Available in 1 Month";
+  if (availability === "unavailable" || availability === "Unavailable") return "Unavailable";
+  return availability;
+}
+
+function getInitialDonorForm(profile: UserProfile | null): FormData {
+  return {
+    fullName: profile?.fullName || "",
+    email: profile?.email || "",
+    phone: profile?.phone || "",
+    whatsapp: profile?.whatsapp || "",
+    bloodGroup: profile?.bloodGroup || "",
+    area: profile?.area || "",
+    lastDonationDate: profile?.lastDonationDate || "",
+    availability: profile?.availability ? getFormAvailability(profile.availability) : "",
+  };
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -353,21 +376,20 @@ function ProfilePhotoUpload({
 
 const DonorForm = () => {
   const router = useRouter();
-  const [form, setForm] = useState<FormData>({
-  fullName:"", email:"", phone:"",
-  whatsapp:"",            // ← NEW
-  bloodGroup:"", area:"",
-  lastDonationDate:"", availability:"",
-});
+  const { profile: sharedProfile, updateProfile } = useProfileData();
+  const [form, setForm] = useState<FormData>(() => getInitialDonorForm(sharedProfile));
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [errors,       setErrors]       = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess,    setIsSuccess]    = useState(false);
-  const [isLoading,    setIsLoading]    = useState(true);
-  const [isAlreadyDonor, setIsAlreadyDonor] = useState(false);
+  const [isLoading,    setIsLoading]    = useState(!sharedProfile);
+  const [fetchedIsDonor, setFetchedIsDonor] = useState(false);
+  const isAlreadyDonor = sharedProfile?.isDonor ?? fetchedIsDonor;
   const [requestError, setRequestError] = useState("");
 
   useEffect(() => {
+    if (sharedProfile) return;
+
     let active = true;
 
     fetch("/api/donor")
@@ -401,7 +423,7 @@ const DonorForm = () => {
           availability,
         }));
         setProfilePhoto(profile.avatarUrl || null);
-        setIsAlreadyDonor(profile.isDonor === true);
+        setFetchedIsDonor(profile.isDonor === true);
       })
       .catch((error) => {
         if (active) setRequestError(error instanceof Error ? error.message : "Unable to load your profile.");
@@ -411,7 +433,7 @@ const DonorForm = () => {
       });
 
     return () => { active = false; };
-  }, [router]);
+  }, [router, sharedProfile]);
 
   const setField = (key: keyof FormData) => (val: string) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -455,10 +477,18 @@ const DonorForm = () => {
         });
       }
 
-      setIsAlreadyDonor(true);
+      updateProfile({
+        ...form,
+        avatarUrl: profilePhoto,
+        isDonor: true,
+      });
+      toast.success({ title: "Donor registered", description: "You are now active as a blood donor." });
+      setFetchedIsDonor(true);
       setIsSuccess(true);
     } catch (error) {
-      setRequestError(error instanceof Error ? error.message : "Unable to register as a donor.");
+      const message = error instanceof Error ? error.message : "Unable to register as a donor.";
+      setRequestError(message);
+      toast.error({ title: "Donor registration failed", description: message });
     } finally {
       setIsSubmitting(false);
     }

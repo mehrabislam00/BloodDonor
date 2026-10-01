@@ -1,42 +1,110 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Trash2, AlertTriangle, X, Loader2,
   LockKeyhole, Eye, EyeOff,
 } from "lucide-react";
-import { deleteUser } from "@/lib/auth-client";
+import { toast } from "@/components/toast/ui/toast";
+import { useProfileData } from "@/components/profile/ProfileDataProvider";
 
 
 // ── Confirmation modal ────────────────────────────────────────────────────
 
 function ConfirmModal({ onClose }: { onClose: () => void }) {
   const router             = useRouter();
+  const { clearAccountState } = useProfileData();
   const [password, setPassword] = useState("");
   const [visible,  setVisible]  = useState(false);
   const [error,    setError]    = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [checkingPassword, setCheckingPassword] = useState(true);
+  const [statusError, setStatusError] = useState("");
+  const [statusAttempt, setStatusAttempt] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/auth/password-status", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to verify account security.");
+        const result = await response.json();
+        if (typeof result.hasPassword !== "boolean") {
+          throw new Error("Unable to verify account security.");
+        }
+        if (active) {
+          setHasPassword(result.hasPassword);
+          setStatusError("");
+        }
+      })
+      .catch(() => {
+        if (active) setStatusError("We couldn't verify your account security. Try again before deleting.");
+      })
+      .finally(() => {
+        if (active) setCheckingPassword(false);
+      });
+
+    return () => { active = false; };
+  }, [statusAttempt]);
 
   const handleDelete = async () => {
-    if (!password.trim()) {
-      setError("Please enter your password to confirm.");
+    if (checkingPassword || hasPassword === null || deleting) return;
+    if (hasPassword && !password.trim()) {
+      setError("Enter your current password to confirm deletion.");
       return;
     }
+
     setDeleting(true);
     setError("");
 
     try {
-      const { error } = await deleteUser({ password });
-      if (error) {
-        setError(error.message || "Incorrect password. Please try again.");
-        setDeleting(false);
+      const response = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(hasPassword ? { password } : {}),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const code = typeof result.code === "string" ? result.code : "";
+        const message = String(result.message || result.error?.message || "").toLowerCase();
+
+        if (code === "SESSION_EXPIRED" || message.includes("expired") || message.includes("fresh") || message.includes("session")) {
+          const sessionError = "Your session is no longer fresh. Please sign out and sign back in, then try deleting the account again.";
+          setError(sessionError);
+          toast.error({ title: "Delete failed", description: sessionError });
+          return;
+        }
+
+        if (code === "PASSWORD_REQUIRED" || code === "INVALID_PASSWORD" || message.includes("password")) {
+          const passwordError = code === "PASSWORD_REQUIRED"
+            ? "Enter your current password to confirm deletion."
+            : "Incorrect password. Please enter your current password.";
+          setError(passwordError);
+          toast.error({ title: "Delete failed", description: passwordError });
+          return;
+        }
+
+        const genericError = "We couldn't delete your account right now. Please try again.";
+        setError(genericError);
+        toast.error({ title: "Delete failed", description: genericError });
         return;
       }
 
-      router.push("/");
+      await clearAccountState();
+      toast.delete({
+        title: "Account Deleted Successfully",
+        description: "Your account has been permanently deleted.",
+        duration: 5500,
+      });
+      router.replace("/signin");
+      router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      const message = "Something went wrong. Please try again.";
+      setError(message);
+      toast.error({ title: "Delete failed", description: message });
+    } finally {
       setDeleting(false);
     }
   };
@@ -95,11 +163,27 @@ function ConfirmModal({ onClose }: { onClose: () => void }) {
             </ul>
           </div>
 
-          {/* Password confirm */}
-          <div>
-            <label className="mb-1.5 block text-[12.5px] font-semibold text-[#403A37]">
-              Enter your password to confirm
-            </label>
+          {/* Account verification */}
+          {checkingPassword && (
+            <p className="text-[12.5px] text-[#9E8E85]">Checking your account security...</p>
+          )}
+          {!checkingPassword && statusError && (
+            <div className="flex items-center justify-between gap-3 rounded-[11px] bg-[#FFF5F5] px-3.5 py-3">
+              <p role="alert" className="text-[12px] text-[#991B1B]">{statusError}</p>
+              <button
+                type="button"
+                onClick={() => { setCheckingPassword(true); setStatusAttempt((attempt) => attempt + 1); }}
+                className="shrink-0 text-[12px] font-semibold text-[#E2484D]"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {!checkingPassword && !statusError && hasPassword && (
+            <div>
+              <label className="mb-1.5 block text-[12.5px] font-semibold text-[#403A37]">
+                Enter your password to confirm
+              </label>
             <div className="relative">
               <LockKeyhole
                 size={15} strokeWidth={2}
@@ -110,6 +194,7 @@ function ConfirmModal({ onClose }: { onClose: () => void }) {
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(""); }}
                 placeholder="Your current password"
+                required
                 autoComplete="current-password"
                 className={[
                   "w-full rounded-[11px] border bg-[#FDFAF8] pl-10 pr-11 py-3",
@@ -132,6 +217,12 @@ function ConfirmModal({ onClose }: { onClose: () => void }) {
               <p className="mt-1.5 text-[11.5px] font-medium text-[#E2484D]">⚠ {error}</p>
             )}
           </div>
+          )}
+          {!checkingPassword && !statusError && hasPassword === false && (
+            <p className="rounded-[11px] bg-[#FAF7F4] px-3.5 py-3 text-[12px] leading-relaxed text-[#68625E]">
+              No password is linked to this account. You can confirm deletion without entering one.
+            </p>
+          )}
         </div>
 
         {/* ── Footer ── */}
@@ -145,7 +236,7 @@ function ConfirmModal({ onClose }: { onClose: () => void }) {
           </button>
           <button
             onClick={handleDelete}
-            disabled={deleting || !password}
+            disabled={deleting || checkingPassword || hasPassword === null || (hasPassword && !password.trim())}
             className="
               flex h-[44px] items-center gap-2 rounded-[10px]
               bg-[#E2484D] px-6 text-[13.5px] font-semibold text-white
@@ -212,7 +303,7 @@ export default function DeleteAccountCard() {
         </div>
       </section>
 
-      {showModal && <ConfirmModal onClose={() => setShowModal(false)} />}
+      {showModal && <ConfirmModal onClose={() => { setShowModal(false); toast.cancel({ title: "Delete cancelled", description: "Your account was not deleted." }); }} />}
     </>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Camera, Pencil, ShieldCheck } from "lucide-react";
+import { Camera, Loader2, Pencil, ShieldCheck } from "lucide-react";
 import type { UserProfile } from "./types";
 import { calcCompletion } from "./types";
 
@@ -9,9 +9,10 @@ interface Props {
   user:     UserProfile;
   onEdit:   () => void;
   onAvatar: (url: string) => void;
+  isAvatarSaving: boolean;
 }
 
-export default function ProfileHeader({ user, onEdit, onAvatar }: Props) {
+export default function ProfileHeader({ user, onEdit, onAvatar, isAvatarSaving }: Props) {
   const inputRef           = useRef<HTMLInputElement>(null);
   const [hover, setHover]  = useState(false);
   const pct                = calcCompletion(user);
@@ -37,10 +38,10 @@ export default function ProfileHeader({ user, onEdit, onAvatar }: Props) {
 
         {/* ── Avatar ── */}
         <div
-          className="relative shrink-0 cursor-pointer self-start sm:self-auto"
+          className={`relative shrink-0 self-start sm:self-auto ${isAvatarSaving ? "cursor-wait" : "cursor-pointer"}`}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
-          onClick={() => inputRef.current?.click()}
+          onClick={() => !isAvatarSaving && inputRef.current?.click()}
         >
           {/* Circle */}
           <div className={[
@@ -64,14 +65,16 @@ export default function ProfileHeader({ user, onEdit, onAvatar }: Props) {
           <div className={[
             "absolute inset-0 flex items-center justify-center rounded-full",
             "bg-[#1B1615]/30 transition-opacity duration-200",
-            hover ? "opacity-100" : "opacity-0",
+            hover || isAvatarSaving ? "opacity-100" : "opacity-0",
           ].join(" ")}>
-            <Camera size={20} strokeWidth={2} className="text-white" />
+            {isAvatarSaving
+              ? <Loader2 size={20} strokeWidth={2} className="animate-spin text-white" />
+              : <Camera size={20} strokeWidth={2} className="text-white" />}
           </div>
 
           {/* Hidden file input */}
           <input ref={inputRef} type="file" accept="image/*"
-            className="hidden" onChange={handleFile} />
+            className="hidden" onChange={handleFile} disabled={isAvatarSaving} />
         </div>
 
         {/* ── Name / email / progress ── */}

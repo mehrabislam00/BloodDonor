@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/toast/ui/toast";
 
 function GoogleIcon() {
   return (
@@ -40,16 +41,33 @@ const LoginForm = () => {
 
   const validate = () => {
     const e: FormErrors = {};
-    if (!form.email.trim())  e.email    = "Email is required.";
+    if (!form.email.trim()) e.email = "Email is required.";
     else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Enter a valid email.";
-    if (!form.password)      e.password = "Password is required.";
+    if (!form.password) e.password = "Password is required.";
     setErrors(e);
+
+    if (e.email || e.password) {
+      if (e.email === "Enter a valid email.") {
+        toast.error({
+          title: "Invalid Email",
+          description: "Please enter a valid email address.",
+        });
+      } else {
+        const description = e.email && e.password
+          ? "Please enter your email and password."
+          : e.email
+            ? "Please enter your email."
+            : "Please enter your password.";
+        toast.warning({ title: "Missing Information", description });
+      }
+    }
+
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate() || isSubmitting) return;
+    if (isSubmitting || !validate()) return;
     setIsSubmitting(true);
     setAuthError("");
     try {
@@ -60,14 +78,27 @@ const LoginForm = () => {
       });
 
       if (error) {
-        setAuthError(error.message || "Unable to sign in. Check your credentials.");
+        const isServerError = error.status >= 500;
+        const title = isServerError ? "Something Went Wrong" : "Login Failed";
+        const message = isServerError
+          ? "We couldn't complete your login. Please try again."
+          : "The email or password you entered is incorrect.";
+        setAuthError(message);
+        toast.error({ title, description: message, duration: 5500 });
         return;
       }
 
+      toast.success({
+        title: "Login Successful",
+        description: "Welcome back! You have successfully signed in.",
+        duration: 5500,
+      });
       router.replace("/");
       router.refresh();
     } catch {
-      setAuthError("Unable to sign in. Please try again.");
+      const message = "We couldn't complete your login. Please try again.";
+      setAuthError(message);
+      toast.error({ title: "Something Went Wrong", description: message, duration: 5500 });
     } finally { setIsSubmitting(false); }
   };
 
@@ -82,10 +113,14 @@ const LoginForm = () => {
       });
 
       if (error) {
-        setAuthError(error.message || "Unable to continue with Google.");
+        const message = error.message || "Unable to continue with Google.";
+        setAuthError(message);
+        toast.error({ title: "Google sign-in failed", description: message });
       }
     } catch {
-      setAuthError("Unable to continue with Google. Please try again.");
+      const message = "Unable to continue with Google. Please try again.";
+      setAuthError(message);
+      toast.error({ title: "Google sign-in failed", description: message });
     } finally {
       setIsGoogle(false);
     }
@@ -131,7 +166,7 @@ const LoginForm = () => {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3.5">
 
         {/* Email */}
         <div>

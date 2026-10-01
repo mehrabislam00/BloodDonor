@@ -1,7 +1,20 @@
-import { createAuthClient } from "better-auth/react"
-export const authClient = createAuthClient({
-    /** The base URL of the server (optional if you're using the same domain) */
-    baseURL: "http://localhost:3000"
-})
+import { createAuthClient } from "better-auth/react";
 
-export const { signIn, signUp, signOut, updateUser, changePassword, deleteUser, useSession } = authClient
+const baseURL =
+  typeof window !== "undefined" ? window.location.origin : undefined;
+
+export const authClient = createAuthClient({
+  baseURL,
+});
+
+export type AuthSession = NonNullable<ReturnType<typeof authClient.useSession>["data"]>;
+
+export const {
+  signIn,
+  signUp,
+  signOut,
+  updateUser,
+  changePassword,
+  deleteUser,
+  useSession,
+} = authClient;

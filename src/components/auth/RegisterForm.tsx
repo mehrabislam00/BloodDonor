@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/toast/ui/toast";
 
 function GoogleIcon() {
   return (
@@ -311,15 +312,23 @@ const RegisterForm = () => {
         if (fieldErrors.terms) nextErrors.terms = fieldErrors.terms;
 
         setErrors(nextErrors);
-        setAuthError(data.message || "Please correct the highlighted fields and try again.");
+        const message = data.message || "Please correct the highlighted fields and try again.";
+        setAuthError(message);
+        toast.error({ title: "Sign up failed", description: message });
         return;
       }
 
-      router.replace("/");
-      router.refresh();
+      toast.success({
+        title: "Registration Successful",
+        description: "Your account has been created successfully. Please log in to continue.",
+        duration: 5500,
+      });
+      router.replace("/signin");
     } catch (err) {
       console.error("signup exception:", err);
-      setAuthError("Unable to create your account. Please try again.");
+      const message = "Unable to create your account. Please try again.";
+      setAuthError(message);
+      toast.error({ title: "Sign up failed", description: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -336,10 +345,14 @@ const RegisterForm = () => {
       });
 
       if (error) {
-        setAuthError(error.message || "Unable to continue with Google.");
+        const message = error.message || "Unable to continue with Google.";
+        setAuthError(message);
+        toast.error({ title: "Google sign-in failed", description: message });
       }
     } catch {
-      setAuthError("Unable to continue with Google. Please try again.");
+      const message = "Unable to continue with Google. Please try again.";
+      setAuthError(message);
+      toast.error({ title: "Google sign-in failed", description: message });
     } finally {
       setIsGoogle(false);
     }

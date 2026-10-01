@@ -11,6 +11,7 @@ export type UserProfile = {
   dateOfBirth: string;
   gender:      string;
   address:     string;
+  lastDonationDate?: string;
   isDonor:     boolean;
   availability: string;
 };

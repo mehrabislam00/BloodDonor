@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Power } from "lucide-react";
+import { Loader2, Power } from "lucide-react";
 import { Toggle } from "./ui/Toggle";
 import { MiniSelect } from "./ui/MiniSelect";
 import { AVAILABILITY_OPTIONS, AV_CONFIG } from "./constants";
@@ -11,9 +11,10 @@ interface Props {
   onUpdateAvailability: (v:string) => void;
   onToggleContact: () => void;
   onTurnOff: () => void;
+  isSaving: boolean;
 }
 
-export function AvailabilityCard({ user, onUpdateAvailability, onToggleContact, onTurnOff }: Props) {
+export function AvailabilityCard({ user, onUpdateAvailability, onToggleContact, onTurnOff, isSaving }: Props) {
   const av = AV_CONFIG[user.availability] ?? AV_CONFIG["Unavailable"];
   const badgeLabel = user.availability === "Available Now" ? "Available" : user.availability;
 
@@ -34,11 +35,11 @@ export function AvailabilityCard({ user, onUpdateAvailability, onToggleContact, 
             </span>
           </div>
         </div>
-        <button onClick={onTurnOff}
-          className="flex shrink-0 items-center gap-2 rounded-[11px] border border-[#E0D9D4] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#68625E] transition-all hover:border-[#E2484D]/30 hover:bg-[#FFF5F5] hover:text-[#E2484D]"
+        <button onClick={onTurnOff} disabled={isSaving}
+          className="flex shrink-0 items-center gap-2 rounded-[11px] border border-[#E0D9D4] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#68625E] transition-all hover:border-[#E2484D]/30 hover:bg-[#FFF5F5] hover:text-[#E2484D] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Power size={13} strokeWidth={2.2} />
-          Turn Off Availability
+          {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Power size={13} strokeWidth={2.2} />}
+          {isSaving ? "Saving..." : "Turn Off Availability"}
         </button>
       </div>
 
@@ -50,13 +51,13 @@ export function AvailabilityCard({ user, onUpdateAvailability, onToggleContact, 
             Turn this on when you&apos;re currently willing to be contacted for blood donation.
           </p>
         </div>
-        <Toggle on={user.contactEnabled} onChange={onToggleContact} />
+        <Toggle on={user.contactEnabled} onChange={onToggleContact} disabled={isSaving} />
       </div>
 
       {/* Change availability */}
       <div className="mt-5">
         <p className="mb-2 text-[12.5px] font-semibold text-[#403A37]">Change availability</p>
-        <MiniSelect value={user.availability} onChange={onUpdateAvailability} options={AVAILABILITY_OPTIONS} />
+        <MiniSelect value={user.availability} onChange={onUpdateAvailability} options={AVAILABILITY_OPTIONS} disabled={isSaving} />
       </div>
     </div>
   );

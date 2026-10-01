@@ -9,17 +9,48 @@ import DonorStatusCard         from "@/components/user-profile/DonorStatusCard";
 import EditProfileModal        from "@/components/user-profile/EditProfileModal";
 import ChangePasswordCard      from "@/components/user-profile/ChangePasswordCard";
 import DeleteAccountCard       from "@/components/user-profile/DeleteAccountCard";
+import { useProfileData } from "@/components/profile/ProfileDataProvider";
+import { toast } from "@/components/toast/ui/toast";
 
 interface Props {
   initialUser: UserProfile;
 }
 
 export default function UserProfileClient({ initialUser }: Props) {
-  const [user,     setUser]     = useState<UserProfile>(initialUser);
+  const { profile: sharedProfile, updateProfile } = useProfileData();
+  const [fallbackUser, setFallbackUser] = useState<UserProfile>(initialUser);
+  const user = sharedProfile ?? fallbackUser;
   const [showEdit, setShowEdit] = useState(false);
+  const [savingAvatar, setSavingAvatar] = useState(false);
 
-  const handleSave   = (updated: UserProfile) => setUser(updated);
-  const handleAvatar = (url: string)          => setUser((u) => ({ ...u, avatarUrl: url }));
+  const handleSave = (updated: UserProfile) => {
+    setFallbackUser(updated);
+    updateProfile(updated);
+  };
+  const handleAvatar = async (url: string) => {
+    const previousAvatar = user.avatarUrl;
+    setSavingAvatar(true);
+    setFallbackUser((current) => ({ ...current, avatarUrl: url }));
+    updateProfile({ avatarUrl: url });
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: url }),
+      });
+      if (!response.ok) throw new Error("Unable to save your profile picture.");
+      toast.success({ title: "Profile picture updated", description: "Your new profile picture has been saved." });
+    } catch (error) {
+      setFallbackUser((current) => ({ ...current, avatarUrl: previousAvatar }));
+      updateProfile({ avatarUrl: previousAvatar });
+      toast.error({
+        title: "Profile picture update failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -29,6 +60,7 @@ export default function UserProfileClient({ initialUser }: Props) {
         user={user}
         onEdit={() => setShowEdit(true)}
         onAvatar={handleAvatar}
+        isAvatarSaving={savingAvatar}
       />
 
       {/* ── Donor status banner (only when isDonor === true) ── */}

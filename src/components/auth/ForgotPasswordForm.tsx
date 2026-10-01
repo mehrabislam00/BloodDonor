@@ -6,6 +6,7 @@ import {
   Mail, Loader2, ArrowRight,
   CheckCircle, ArrowLeft, RefreshCw,
 } from "lucide-react";
+import { toast } from "@/components/toast/ui/toast";
 
 type FormErrors = { email?: string };
 
@@ -35,7 +36,10 @@ const ForgotPasswordForm = () => {
     try {
       await new Promise((r) => setTimeout(r, 1800));
       // TODO: supabase.auth.resetPasswordForEmail(email)
+      toast.success({ title: "Reset link sent", description: "A password reset link has been sent to your email." });
       setIsSuccess(true);
+    } catch {
+      toast.error({ title: "Password reset failed", description: "We could not send the reset link. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -46,7 +50,10 @@ const ForgotPasswordForm = () => {
     setIsResending(true);
     try {
       await new Promise((r) => setTimeout(r, 1200));
+      toast.info({ title: "Reset link resent", description: "A new password reset link has been sent." });
       // TODO: resend
+    } catch {
+      toast.error({ title: "Resend failed", description: "We could not resend the reset email. Please try again." });
     } finally {
       setIsResending(false);
     }

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import type { UserProfile } from "./types";
 import { AVAILABILITY, BLOOD_GROUPS, AREAS, GENDERS } from "./types";
+import { toast } from "@/components/toast/ui/toast";
 
 // ── Mini field-level select ───────────────────────────────────────────────
 
@@ -135,6 +136,7 @@ export default function EditProfileModal({ user, onClose, onSave }: Props) {
         throw new Error(result.error || "Unable to update your profile.");
       }
 
+      toast.success({ title: "Profile updated", description: "Your profile information has been saved successfully." });
       setSuccess(true);
       onSave({
         ...form,
@@ -144,7 +146,9 @@ export default function EditProfileModal({ user, onClose, onSave }: Props) {
       });
       setTimeout(onClose, 500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to update your profile.");
+      const message = err instanceof Error ? err.message : "Unable to update your profile.";
+      setError(message);
+      toast.error({ title: "Profile update failed", description: message });
     } finally {
       setSaving(false);
     }

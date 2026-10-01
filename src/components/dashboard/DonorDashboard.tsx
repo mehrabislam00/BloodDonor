@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { DashboardHeader }   from "./DashboardHeader";
 import { AvailabilityCard }  from "./AvailabilityCard";
 import { ProfileCard }       from "./ProfileCard";
@@ -9,35 +9,46 @@ import { DonationInfoCard }  from "./DonationInfoCard";
 import { EditProfileModal }  from "./EditProfileModal";
 import { MOCK_USER, getGreeting } from "./constants";
 import type { UserData } from "./types";
+import { useProfileData } from "@/components/profile/ProfileDataProvider";
+import { toast } from "@/components/toast/ui/toast";
 
 export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: UserData }) {
+  const { updateProfile } = useProfileData();
   const [user,         setUser]         = useState<UserData>(initialUser);
   const [showFullEdit, setShowFullEdit] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const firstName = user.fullName.split(" ")[0];
 
   const updateUser = async (patch: Partial<UserData>) => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setIsSaving(true);
+    const previousUser = user;
     const nextUser = { ...user, ...patch };
     setUser(nextUser);
 
-    await fetch("/api/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fullName: nextUser.fullName,
-        phone: nextUser.phone,
-        whatsapp: nextUser.whatsapp,
-        bloodGroup: nextUser.bloodGroup,
-        area: nextUser.area,
-        availability: nextUser.availability,
-        avatarUrl: nextUser.photoUrl,
-        lastDonationDate: nextUser.lastDonationDate,
-        isDonor: true,
-      }),
-    });
+    try {
+      const profileResponse = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: nextUser.fullName,
+          phone: nextUser.phone,
+          whatsapp: nextUser.whatsapp,
+          bloodGroup: nextUser.bloodGroup,
+          area: nextUser.area,
+          availability: nextUser.availability,
+          avatarUrl: nextUser.photoUrl,
+          lastDonationDate: nextUser.lastDonationDate,
+          isDonor: true,
+        }),
+      });
+      if (!profileResponse.ok) throw new Error("Unable to save your donor profile.");
 
-    if (nextUser.availability || nextUser.lastDonationDate) {
-      await fetch("/api/donor", {
+      if (nextUser.availability || nextUser.lastDonationDate) {
+        const donorResponse = await fetch("/api/donor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -49,6 +60,31 @@ export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: User
           lastDonationDate: nextUser.lastDonationDate,
         }),
       });
+        if (!donorResponse.ok) throw new Error("Unable to save your donor details.");
+      }
+
+      updateProfile({
+        fullName: nextUser.fullName,
+        email: nextUser.email,
+        phone: nextUser.phone,
+        whatsapp: nextUser.whatsapp,
+        bloodGroup: nextUser.bloodGroup,
+        area: nextUser.area,
+        availability: nextUser.availability,
+        avatarUrl: nextUser.photoUrl,
+        lastDonationDate: nextUser.lastDonationDate,
+        isDonor: true,
+      });
+      toast.success({ title: "Donor profile updated", description: "Your donor information has been saved." });
+    } catch (error) {
+      setUser(previousUser);
+      toast.error({
+        title: "Donor profile update failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
     }
   };
 
@@ -62,6 +98,7 @@ export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: User
         <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1fr_320px]">
           <AvailabilityCard
             user={user}
+            isSaving={isSaving}
             onUpdateAvailability={v => updateUser({ availability: v })}
             onToggleContact={() => updateUser({ contactEnabled: !user.contactEnabled })}
             onTurnOff={() => updateUser({ availability: "Unavailable" })}

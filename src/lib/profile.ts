@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { database } from "./mongodb";
 
 export const profileFields = [
@@ -40,14 +41,14 @@ export function getProfileCompletion(
 
 const profiles = database.collection("userProfiles");
 
-export async function getUserProfile(userId: string): Promise<ProfileFields> {
+export const getUserProfile = cache(async (userId: string): Promise<ProfileFields> => {
   const profile = await profiles.findOne<{ userId: string } & ProfileFields>(
     { userId },
     { projection: { _id: 0, userId: 0 } },
   );
 
   return profile ?? {};
-}
+});
 
 export async function updateUserProfile(
   userId: string,
