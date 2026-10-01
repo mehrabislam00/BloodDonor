@@ -64,14 +64,12 @@ const RegisterForm = () => {
     if (!validate() || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const { data, error } = await authClient.signUp.email({
+      const { error } = await authClient.signUp.email({
         name: `${form.firstName} ${form.lastName}`.trim(),
         email: form.email,
         password: form.password,
         callbackURL: "/",
       });
-
-      console.log("signup result:", { data, error });
 
       if (error) {
         console.error("signup error:", error);
