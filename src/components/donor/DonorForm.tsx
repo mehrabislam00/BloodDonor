@@ -2,11 +2,12 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   User, Mail, Phone, Droplets, MapPin,
   Calendar, Clock, CheckCircle, ArrowRight,
   Loader2, ShieldCheck, Users, Check, ChevronDown,
-  Camera, ImagePlus, X,
+  Camera, ImagePlus, X, MessageCircle,
 } from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────
@@ -38,6 +39,7 @@ const AVAILABILITY_DOT: Record<string, string> = {
 
 type FormData = {
   fullName: string; email: string; phone: string;
+  whatsapp: string;           // ← NEW
   bloodGroup: string; area: string;
   lastDonationDate: string; availability: string;
 };
@@ -194,15 +196,25 @@ function Field({ label, icon: Icon, error, children }: {
 
 // ── ProfilePhotoUpload ────────────────────────────────────────────────────
 
-function ProfilePhotoUpload() {
-  const [preview, setPreview] = useState<string | null>(null);
+function ProfilePhotoUpload({
+  initialPreview,
+  onChange,
+}: {
+  initialPreview: string | null;
+  onChange: (value: string | null) => void;
+}) {
+  const [preview, setPreview] = useState<string | null>(initialPreview);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target?.result as string);
+    reader.onload = (e) => {
+      const value = e.target?.result as string;
+      setPreview(value);
+      onChange(value);
+    };
     reader.readAsDataURL(file);
   };
 
@@ -228,6 +240,7 @@ function ProfilePhotoUpload() {
   const remove = (e: React.MouseEvent) => {
     e.stopPropagation();
     setPreview(null);
+    onChange(null);
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -339,14 +352,66 @@ function ProfilePhotoUpload() {
 // ── DonorForm ─────────────────────────────────────────────────────────────
 
 const DonorForm = () => {
+  const router = useRouter();
   const [form, setForm] = useState<FormData>({
-    fullName: "", email: "", phone: "",
-    bloodGroup: "", area: "",
-    lastDonationDate: "", availability: "",
-  });
+  fullName:"", email:"", phone:"",
+  whatsapp:"",            // ← NEW
+  bloodGroup:"", area:"",
+  lastDonationDate:"", availability:"",
+});
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [errors,       setErrors]       = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess,    setIsSuccess]    = useState(false);
+  const [isLoading,    setIsLoading]    = useState(true);
+  const [isAlreadyDonor, setIsAlreadyDonor] = useState(false);
+  const [requestError, setRequestError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/donor")
+      .then(async (response) => {
+        const result = await response.json();
+        if (response.status === 401) {
+          router.replace("/login");
+          return;
+        }
+        if (!response.ok) throw new Error(result.error || "Unable to load your profile.");
+        if (!active) return;
+
+        const profile = result.profile ?? {};
+        const availability = profile.availability === "available"
+          ? "Available Now"
+          : profile.availability === "available-soon"
+            ? "Available in 1 Month"
+            : profile.availability === "unavailable"
+              ? "Unavailable"
+              : profile.availability || "";
+
+        setForm((current) => ({
+          ...current,
+          fullName: profile.fullName || "",
+          email: profile.email || "",
+          phone: profile.phone || "",
+          whatsapp: profile.whatsapp || "",
+          bloodGroup: profile.bloodGroup || "",
+          area: profile.area || "",
+          lastDonationDate: profile.lastDonationDate || "",
+          availability,
+        }));
+        setProfilePhoto(profile.avatarUrl || null);
+        setIsAlreadyDonor(profile.isDonor === true);
+      })
+      .catch((error) => {
+        if (active) setRequestError(error instanceof Error ? error.message : "Unable to load your profile.");
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [router]);
 
   const setField = (key: keyof FormData) => (val: string) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -370,11 +435,33 @@ const DonorForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate() || isSubmitting) return;
+    if (!validate() || isSubmitting || isAlreadyDonor) return;
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1800));
-    setIsSubmitting(false);
-    setIsSuccess(true);
+    setRequestError("");
+    try {
+      const response = await fetch("/api/donor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to register as a donor.");
+
+      if (profilePhoto) {
+        await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ avatarUrl: profilePhoto }),
+        });
+      }
+
+      setIsAlreadyDonor(true);
+      setIsSuccess(true);
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "Unable to register as a donor.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const ic = (f: keyof FormData) => [
@@ -385,6 +472,27 @@ const DonorForm = () => {
       ? "border-[#E2484D] ring-2 ring-[#E2484D]/10"
       : "border-[#E0D9D4] hover:border-[#E2484D]/30 focus:border-[#E2484D]/60 focus:ring-2 focus:ring-[#E2484D]/10 focus:shadow-sm",
   ].join(" ");
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[360px] items-center justify-center rounded-[22px] border border-[#EDE7E2] bg-white shadow-[0_20px_60px_rgba(27,22,21,0.09)]">
+        <Loader2 size={24} className="animate-spin text-[#E2484D]" />
+      </div>
+    );
+  }
+
+  if (isAlreadyDonor && !isSuccess) {
+    return (
+      <div className="rounded-[22px] border border-[#EDE7E2] bg-white p-8 text-center shadow-[0_20px_60px_rgba(27,22,21,0.09)]">
+        <CheckCircle size={40} className="mx-auto text-[#1A9E56]" />
+        <h3 className="mt-5 text-[22px] font-extrabold text-[#1B1615]">You are already a donor</h3>
+        <p className="mt-2 text-[13px] text-[#9E8E85]">Your donor profile is active and can be managed from the dashboard.</p>
+        <Link href="/blood-donor-profile" className="mt-6 inline-flex h-[46px] items-center gap-2 rounded-[11px] bg-[#E2484D] px-6 text-[13px] font-semibold text-white">
+          View Donor Dashboard <ArrowRight size={15} />
+        </Link>
+      </div>
+    );
+  }
 
   // ── Success state ─────────────────────────────────────────────────────
 
@@ -419,7 +527,7 @@ const DonorForm = () => {
           href="/"
           className="mt-7 flex h-[48px] items-center gap-2 rounded-[12px] bg-[#E2484D] px-8 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(226,72,77,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#D83E43]"
         >
-          Back to Home <ArrowRight size={16} />
+          View Donor Dashboard <ArrowRight size={16} />
         </Link>
       </div>
     );
@@ -441,7 +549,7 @@ const DonorForm = () => {
       <form onSubmit={handleSubmit} className="flex flex-col gap-1">
 
         {/* ── Profile Photo ── */}
-        <ProfilePhotoUpload />
+        <ProfilePhotoUpload initialPreview={profilePhoto} onChange={setProfilePhoto} />
 
         {/* ── Divider ── */}
         <div className="my-3 border-t border-[#F0EAE5]" />
@@ -453,19 +561,25 @@ const DonorForm = () => {
             className={ic("fullName")} />
         </Field>
 
-        {/* Email + Phone */}
-        <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-          <Field label="Email" icon={Mail} error={errors.email}>
-            <input type="email" placeholder="you@example.com"
-              value={form.email} onChange={setInput("email")}
-              className={ic("email")} />
-          </Field>
-          <Field label="Phone" icon={Phone} error={errors.phone}>
-            <input type="tel" placeholder="01XXXXXXXXX"
-              value={form.phone} onChange={setInput("phone")}
-              className={ic("phone")} />
-          </Field>
-        </div>
+        <Field label="Email" icon={Mail} error={errors.email}>
+  <input type="email" placeholder="you@example.com"
+    value={form.email} onChange={setInput("email")}
+    className={ic("email")} />
+</Field>
+
+{/* Phone + WhatsApp */}
+<div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+  <Field label="Phone" icon={Phone} error={errors.phone}>
+    <input type="tel" placeholder="01XXXXXXXXX"
+      value={form.phone} onChange={setInput("phone")}
+      className={ic("phone")} />
+  </Field>
+  <Field label="WhatsApp" icon={MessageCircle} error={undefined}>
+    <input type="tel" placeholder="01XXXXXXXXX (optional)"
+      value={form.whatsapp} onChange={setInput("whatsapp")}
+      className={ic("whatsapp")} />
+  </Field>
+</div>
 
         {/* Blood Group + Area */}
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
@@ -551,6 +665,9 @@ const DonorForm = () => {
         </Field>
 
         {/* Submit */}
+        {requestError && (
+          <p role="alert" className="mt-2 text-[12px] font-medium text-[#E2484D]">{requestError}</p>
+        )}
         <button
           type="submit"
           disabled={isSubmitting}

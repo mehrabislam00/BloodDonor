@@ -31,9 +31,11 @@ const getNavbarName = (fullName: string): string => {
 interface UserDropdownProps {
   userName:  string | null | undefined;
   userEmail: string | null | undefined;
+  isDonor: boolean;
+  profileCompletion: number;
 }
 
-const UserDropdown = ({ userName, userEmail }: UserDropdownProps) => {
+const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserDropdownProps) => {
   const [isOpen,  setIsOpen]  = useState(false);
   const [visible, setVisible] = useState(false);
   const ref                   = useRef<HTMLDivElement>(null);
@@ -83,8 +85,8 @@ const UserDropdown = ({ userName, userEmail }: UserDropdownProps) => {
   };
 
   const menuItems = [
-    { label: "My Profile",    icon: User,     href: "/profile"        },
-    { label: "Donor Profile", icon: Droplets, href: "/become-a-donor" },
+    { label: "My Profile",    icon: User,     href: "/user-profile"   },
+    { label: "View Donor Profile", icon: Droplets, href: isDonor ? "/blood-donor-profile" : "/become-a-donor" },
     { label: "Settings",      icon: Settings, href: "/settings"       },
   ];
 
@@ -106,12 +108,12 @@ const UserDropdown = ({ userName, userEmail }: UserDropdownProps) => {
         "
       >
         {/* Avatar */}
-        <div className="
-          flex h-8 w-8 shrink-0 items-center justify-center
-          rounded-full bg-[#FFE4E4]
-          transition-all duration-200
-          group-hover:ring-2 group-hover:ring-[#E2484D]/20
+        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFE4E4]
+          transition-all duration-200 group-hover:ring-2 group-hover:ring-[#E2484D]/20
         ">
+          {profileCompletion < 100 && (
+            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#FDF9F6] bg-[#E2484D]" aria-label="Profile incomplete" />
+          )}
           <span className="text-[12px] font-bold uppercase leading-none text-[#E2484D]">
             {displayName.charAt(0)}
           </span>
@@ -120,7 +122,7 @@ const UserDropdown = ({ userName, userEmail }: UserDropdownProps) => {
         {/* Name */}
         <div className="hidden flex-col items-start leading-tight sm:flex">
           <span className="text-[10.5px] font-medium text-[#B5A89F]">
-            Welcome back
+            Welcome
           </span>
           <span className="text-[13px] font-semibold text-[#1B1615]">
             {navbarName}
@@ -179,6 +181,17 @@ const UserDropdown = ({ userName, userEmail }: UserDropdownProps) => {
               </div>
             </div>
           </div>
+
+          {profileCompletion < 100 && (
+            <Link
+              href="/user-profile"
+              onClick={close}
+              className="mx-3 mb-1 flex items-center justify-between rounded-[10px] bg-[#FFF5F5] px-3 py-2 text-[12px] font-semibold text-[#E2484D]"
+            >
+              <span>Complete Your Profile</span>
+              <span>{profileCompletion}%</span>
+            </Link>
+          )}
 
           {/* Menu items */}
           <div className="py-1.5">
@@ -248,10 +261,39 @@ const Navbar = () => {
   const pathname = usePathname();
   const router   = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [profileSummary, setProfileSummary] = useState({
+    isDonor: false,
+    profileCompletion: 100,
+  });
 
   const { data: session, isPending } = useSession();
   const userName  = session?.user.name?.trim() || session?.user.email?.split("@")[0] || null;
   const userEmail = session?.user.email ?? null;
+
+  useEffect(() => {
+    if (!session?.user.id) {
+      return;
+    }
+
+    let active = true;
+    fetch("/api/profile")
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then((result) => {
+        if (!active || !result) return;
+        setProfileSummary({
+          isDonor: result.profile?.isDonor === true,
+          profileCompletion: typeof result.profileCompletion === "number"
+            ? result.profileCompletion
+            : 100,
+        });
+      })
+      .catch(() => undefined);
+
+    return () => { active = false; };
+  }, [pathname, session?.user.id]);
 
   const navItems = [
     { label: "Find Donor",     href: "/find-a-donor"   },
@@ -381,7 +423,12 @@ const Navbar = () => {
             <div className="h-8 w-32 animate-pulse rounded-[10px] bg-[#F0EAE5]" />
           ) : session ? (
             /* ── Logged in: dropdown ── */
-            <UserDropdown userName={userName} userEmail={userEmail} />
+            <UserDropdown
+              userName={userName}
+              userEmail={userEmail}
+              isDonor={profileSummary.isDonor}
+              profileCompletion={profileSummary.profileCompletion}
+            />
           ) : (
             /* ── Logged out: login button ── */
             <Link href="/login">
@@ -515,8 +562,8 @@ const Navbar = () => {
                 {/* Mobile profile links */}
                 <div className="flex flex-col gap-1 rounded-xl border border-[#EDE7E2] bg-white py-1">
                   {[
-                    { label: "My Profile",    icon: User,     href: "/profile"        },
-                    { label: "Donor Profile", icon: Droplets, href: "/become-a-donor" },
+                    { label: "My Profile",    icon: User,     href: "/user-profile"   },
+                    { label: "View Donor Profile", icon: Droplets, href: profileSummary.isDonor ? "/blood-donor-profile" : "/become-a-donor" },
                     { label: "Settings",      icon: Settings, href: "/settings"       },
                   ].map(({ label, icon: Icon, href }) => (
                     <Link
