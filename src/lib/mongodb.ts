@@ -18,3 +18,21 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export const database = mongoClient.db("better_auth_db_blood_donor");
+
+void (async () => {
+  try {
+    const userCollection = database.collection("user");
+
+    await userCollection.createIndex(
+      { email: 1 },
+      { unique: true, collation: { locale: "en", strength: 2 } }
+    );
+
+    await userCollection.createIndex(
+      { name: 1 },
+      { unique: true, collation: { locale: "en", strength: 2 } }
+    );
+  } catch {
+    // Ignore index creation race conditions during startup.
+  }
+})();

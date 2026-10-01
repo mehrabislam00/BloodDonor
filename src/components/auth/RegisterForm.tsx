@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
@@ -21,41 +21,256 @@ type FormData = {
   firstName: string; lastName: string; email: string;
   password: string; confirmPassword: string; terms: boolean;
 };
-type FormErrors = Partial<Record<keyof FormData, string>>;
+type FormErrors = Partial<Record<keyof FormData | "name", string>>;
+type AvailabilityState = {
+  status: "idle" | "checking" | "available" | "taken" | "invalid";
+  message: string;
+};
 
-const base   = "w-full h-[44px] rounded-[10px] border bg-[#FAF7F4] pl-10 pr-4 text-[13px] text-[#1B1615] placeholder:text-[#C5B8B0] outline-none transition-all duration-200";
+const base = "w-full h-[44px] rounded-[10px] border bg-[#FAF7F4] pl-10 pr-4 text-[13px] text-[#1B1615] placeholder:text-[#C5B8B0] outline-none transition-all duration-200";
 const normal = "border-[#E8E2DD] hover:border-[#E2484D]/30 focus:border-[#E2484D]/60 focus:ring-2 focus:ring-[#E2484D]/10 focus:bg-white focus:shadow-sm";
 const errCls = "border-[#E2484D] ring-2 ring-[#E2484D]/10 bg-white";
 
+const namePattern = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9][A-Za-zÀ-ÖØ-öø-ÿ0-9' .-]*$/;
+const emailPattern = /^(?!\.)(?!.*\.\.)[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/;
+
+const normalizeNamePart = (value: string) => value.trim().replace(/\s+/g, " ");
+const getFullName = (firstName: string, lastName: string) => `${normalizeNamePart(firstName)} ${normalizeNamePart(lastName)}`.trim();
+
+const getNameValidationError = (value: string) => {
+  const name = normalizeNamePart(value);
+
+  if (!name) return "Please enter your full name.";
+  if (name.length < 2) return "Name must be at least 2 characters long.";
+  if (name.length > 60) return "Name must be 60 characters or less.";
+  if (!namePattern.test(name)) return "Name can only contain letters, spaces, periods, hyphens, apostrophes, and numbers.";
+
+  return "";
+};
+
+const getEmailValidationError = (value: string) => {
+  const email = value.trim();
+
+  if (!email) return "Email is required.";
+  if (email.includes(" ")) return "Please enter a valid email address.";
+  if (!emailPattern.test(email)) return "Please enter a valid email address.";
+
+  return "";
+};
+
+const getPasswordChecks = (password: string) => ({
+  minLength: password.length >= 8,
+  uppercase: /[A-Z]/.test(password),
+  lowercase: /[a-z]/.test(password),
+  number: /\d/.test(password),
+  special: /[^A-Za-z0-9]/.test(password),
+});
+
+const getPasswordStrength = (password: string) => {
+  const checks = getPasswordChecks(password);
+  const metCount = Object.values(checks).filter(Boolean).length;
+
+  if (!password) {
+    return { label: "", score: 0, checks, strong: false };
+  }
+
+  if (metCount === 5) {
+    return { label: "Strong", score: 4, checks, strong: true };
+  }
+  if (metCount >= 4) {
+    return { label: "Good", score: 3, checks, strong: false };
+  }
+  if (metCount >= 3) {
+    return { label: "Fair", score: 2, checks, strong: false };
+  }
+
+  return { label: "Weak", score: 1, checks, strong: false };
+};
+
 const RegisterForm = () => {
   const router = useRouter();
-  const [form,         setForm]        = useState<FormData>({
-    firstName: "", lastName: "", email: "",
-    password: "", confirmPassword: "", terms: false,
+  const [form, setForm] = useState<FormData>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    terms: false,
   });
-  const [errors,       setErrors]      = useState<FormErrors>({});
-  const [authError,    setAuthError]   = useState("");
-  const [showPw,       setShowPw]      = useState(false);
-  const [showCPw,      setShowCPw]     = useState(false);
-  const [isSubmitting, setIsSubmitting]= useState(false);
-  const [isGoogle,     setIsGoogle]    = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [authError, setAuthError] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [showCPw, setShowCPw] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogle, setIsGoogle] = useState(false);
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  });
+  const [nameStatus, setNameStatus] = useState<AvailabilityState>({ status: "idle", message: "" });
+  const [emailStatus, setEmailStatus] = useState<AvailabilityState>({ status: "idle", message: "" });
+
+  const fullName = useMemo(() => getFullName(form.firstName, form.lastName), [form.firstName, form.lastName]);
+  const passwordStrength = useMemo(() => getPasswordStrength(form.password), [form.password]);
+  const passwordRuleList = [
+    { label: "8+ characters", valid: passwordStrength.checks.minLength },
+    { label: "Uppercase", valid: passwordStrength.checks.uppercase },
+    { label: "Lowercase", valid: passwordStrength.checks.lowercase },
+    { label: "Number", valid: passwordStrength.checks.number },
+    { label: "Special character", valid: passwordStrength.checks.special },
+  ];
 
   const set = (k: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = k === "terms" ? e.target.checked : e.target.value;
     setForm((f) => ({ ...f, [k]: val }));
-    if (errors[k]) setErrors((er) => ({ ...er, [k]: undefined }));
+    setAuthError("");
+
+    if (k === "firstName" || k === "lastName") {
+      setTouched((prev) => ({ ...prev, name: true }));
+      if (errors.name) setErrors((er) => ({ ...er, name: undefined }));
+      setNameStatus({ status: "idle", message: "" });
+    }
+
+    if (k === "email") {
+      setTouched((prev) => ({ ...prev, email: true }));
+      if (errors.email) setErrors((er) => ({ ...er, email: undefined }));
+      setEmailStatus({ status: "idle", message: "" });
+    }
+
+    if (k === "password") {
+      setTouched((prev) => ({ ...prev, password: true }));
+      setErrors((er) => ({ ...er, password: undefined, confirmPassword: undefined }));
+    }
+
+    if (k === "confirmPassword") {
+      setTouched((prev) => ({ ...prev, confirmPassword: true }));
+      setErrors((er) => ({ ...er, confirmPassword: undefined }));
+    }
+
+    if (k === "firstName") {
+      setErrors((er) => ({ ...er, firstName: undefined }));
+    }
+
+    if (k === "lastName") {
+      setErrors((er) => ({ ...er, lastName: undefined }));
+    }
+
+    if (k === "terms") {
+      setErrors((er) => ({ ...er, terms: undefined }));
+    }
   };
+
+  useEffect(() => {
+    if (!touched.name) return;
+
+    const validationError = getNameValidationError(fullName);
+    if (!fullName) {
+      setNameStatus({ status: "idle", message: "" });
+      return;
+    }
+
+    if (validationError) {
+      setNameStatus({ status: "invalid", message: validationError });
+      return;
+    }
+
+    const timeout = window.setTimeout(async () => {
+      setNameStatus({ status: "checking", message: "Checking name availability…" });
+
+      try {
+        const response = await fetch("/api/auth/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "name", value: fullName }),
+        });
+
+        const data = await response.json();
+
+        if (data.available) {
+          setNameStatus({ status: "available", message: "Name is available" });
+        } else {
+          setNameStatus({ status: "taken", message: "This name is already taken." });
+        }
+      } catch {
+        setNameStatus({ status: "invalid", message: "Unable to check name availability right now." });
+      }
+    }, 450);
+
+    return () => window.clearTimeout(timeout);
+  }, [fullName, touched.name]);
+
+  useEffect(() => {
+    if (!touched.email) return;
+
+    const normalized = form.email.trim();
+    if (!normalized) {
+      setEmailStatus({ status: "idle", message: "" });
+      return;
+    }
+
+    const validationError = getEmailValidationError(normalized);
+    if (validationError) {
+      setEmailStatus({ status: "invalid", message: validationError });
+      return;
+    }
+
+    const timeout = window.setTimeout(async () => {
+      setEmailStatus({ status: "checking", message: "Checking email availability…" });
+
+      try {
+        const response = await fetch("/api/auth/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "email", value: normalized.toLowerCase() }),
+        });
+
+        const data = await response.json();
+
+        if (data.available) {
+          setEmailStatus({ status: "available", message: "Email is available" });
+        } else {
+          setEmailStatus({ status: "taken", message: "This email is already registered." });
+        }
+      } catch {
+        setEmailStatus({ status: "invalid", message: "Unable to check email availability right now." });
+      }
+    }, 500);
+
+    return () => window.clearTimeout(timeout);
+  }, [form.email, touched.email]);
 
   const validate = () => {
     const e: FormErrors = {};
-    if (!form.firstName.trim())  e.firstName = "Required.";
-    if (!form.lastName.trim())   e.lastName  = "Required.";
-    if (!form.email.trim())      e.email     = "Email is required.";
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Enter a valid email.";
-    if (!form.password)          e.password  = "Required.";
-    else if (form.password.length < 8) e.password = "Min. 8 characters.";
-    if (form.password !== form.confirmPassword) e.confirmPassword = "Passwords don't match.";
-    if (!form.terms)             e.terms = "You must agree to continue.";
+    if (!form.firstName.trim()) e.firstName = "Required.";
+    if (!form.lastName.trim()) e.lastName = "Required.";
+
+    const fullNameError = getNameValidationError(fullName);
+    if (fullName && fullNameError) e.name = fullNameError;
+    else if (nameStatus.status === "taken") e.name = "This name is already taken.";
+
+    const emailError = getEmailValidationError(form.email);
+    if (emailError) e.email = emailError;
+    else if (emailStatus.status === "taken") e.email = "This email is already registered.";
+
+    if (!form.password) {
+      e.password = "Password is required.";
+    } else {
+      const p = getPasswordStrength(form.password);
+      if (!p.strong) {
+        e.password = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+      }
+    }
+
+    if (!form.confirmPassword) {
+      e.confirmPassword = "Please confirm your password.";
+    } else if (form.password !== form.confirmPassword) {
+      e.confirmPassword = "Passwords do not match.";
+    }
+
+    if (!form.terms) e.terms = "You must agree to continue.";
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -63,17 +278,40 @@ const RegisterForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate() || isSubmitting) return;
+
     setIsSubmitting(true);
+    setAuthError("");
+
     try {
-      const { error } = await authClient.signUp.email({
-        name: `${form.firstName} ${form.lastName}`.trim(),
-        email: form.email,
-        password: form.password,
-        callbackURL: "/",
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          password: form.password,
+          confirmPassword: form.confirmPassword,
+          terms: form.terms,
+        }),
       });
 
-      if (error) {
-        console.error("signup error:", error);
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const fieldErrors = data.fieldErrors ?? {};
+        const nextErrors: FormErrors = {};
+
+        if (fieldErrors.name) nextErrors.name = fieldErrors.name;
+        if (fieldErrors.firstName) nextErrors.firstName = fieldErrors.firstName;
+        if (fieldErrors.lastName) nextErrors.lastName = fieldErrors.lastName;
+        if (fieldErrors.email) nextErrors.email = fieldErrors.email;
+        if (fieldErrors.password) nextErrors.password = fieldErrors.password;
+        if (fieldErrors.confirmPassword) nextErrors.confirmPassword = fieldErrors.confirmPassword;
+        if (fieldErrors.terms) nextErrors.terms = fieldErrors.terms;
+
+        setErrors(nextErrors);
+        setAuthError(data.message || "Please correct the highlighted fields and try again.");
         return;
       }
 
@@ -81,6 +319,7 @@ const RegisterForm = () => {
       router.refresh();
     } catch (err) {
       console.error("signup exception:", err);
+      setAuthError("Unable to create your account. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -110,8 +349,6 @@ const RegisterForm = () => {
 
   return (
     <div className="w-full max-w-[460px]">
-
-      {/* Heading */}
       <div className="mb-5">
         <h1 className="text-[28px] font-extrabold tracking-[-0.028em] text-[#1B1615]">
           Create an account
@@ -121,7 +358,6 @@ const RegisterForm = () => {
         </p>
       </div>
 
-      {/* Google */}
       <button
         type="button" onClick={handleGoogle} disabled={isGoogle}
         className="
@@ -137,17 +373,13 @@ const RegisterForm = () => {
         Continue with Google
       </button>
 
-      {/* OR */}
       <div className="my-4 flex items-center gap-4">
         <div className="h-px flex-1 bg-[#EDE7E2]" />
         <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#C5B8B0]">or</span>
         <div className="h-px flex-1 bg-[#EDE7E2]" />
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-
-        {/* First + Last */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-[12px] font-semibold text-[#403A37]">First Name</label>
@@ -167,17 +399,35 @@ const RegisterForm = () => {
           </div>
         </div>
 
-        {/* Email */}
+        {(nameStatus.message || errors.name) && (
+          <p
+            className={`text-[10.5px] font-medium ${
+              nameStatus.status === "available" ? "text-emerald-600" : "text-[#E2484D]"
+            }`}
+          >
+            {nameStatus.status === "available" ? "✓ " : "⚠ "}
+            {errors.name || nameStatus.message}
+          </p>
+        )}
+
         <div>
           <label className="mb-1 block text-[12px] font-semibold text-[#403A37]">Email address</label>
           <div className="relative">
             <Mail size={14} strokeWidth={2} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#C5B8B0]" />
             <input type="email" placeholder="you@example.com" value={form.email} onChange={set("email")} className={ic("email")} />
           </div>
-          {errors.email && <p className="mt-0.5 text-[10.5px] font-medium text-[#E2484D]">⚠ {errors.email}</p>}
+          {(errors.email || emailStatus.message) && (
+            <p
+              className={`mt-0.5 text-[10.5px] font-medium ${
+                emailStatus.status === "available" ? "text-emerald-600" : "text-[#E2484D]"
+              }`}
+            >
+              {emailStatus.status === "available" ? "✓ " : "⚠ "}
+              {errors.email || emailStatus.message}
+            </p>
+          )}
         </div>
 
-        {/* Password + Confirm */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-[12px] font-semibold text-[#403A37]">Password</label>
@@ -186,11 +436,11 @@ const RegisterForm = () => {
               <input
                 type={showPw ? "text" : "password"}
                 placeholder="Min. 8 chars"
-                value={form.password} onChange={set("password")}
+                value={form.password}
+                onChange={set("password")}
                 className={`${ic("password")} pr-9`}
               />
-              <button type="button" onClick={() => setShowPw((s) => !s)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#C5B8B0] hover:text-[#68625E] transition-colors">
+              <button type="button" onClick={() => setShowPw((s) => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#C5B8B0] hover:text-[#68625E] transition-colors">
                 {showPw ? <EyeOff size={14} strokeWidth={2} /> : <Eye size={14} strokeWidth={2} />}
               </button>
             </div>
@@ -203,11 +453,11 @@ const RegisterForm = () => {
               <input
                 type={showCPw ? "text" : "password"}
                 placeholder="Repeat"
-                value={form.confirmPassword} onChange={set("confirmPassword")}
+                value={form.confirmPassword}
+                onChange={set("confirmPassword")}
                 className={`${ic("confirmPassword")} pr-9`}
               />
-              <button type="button" onClick={() => setShowCPw((s) => !s)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#C5B8B0] hover:text-[#68625E] transition-colors">
+              <button type="button" onClick={() => setShowCPw((s) => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#C5B8B0] hover:text-[#68625E] transition-colors">
                 {showCPw ? <EyeOff size={14} strokeWidth={2} /> : <Eye size={14} strokeWidth={2} />}
               </button>
             </div>
@@ -215,7 +465,45 @@ const RegisterForm = () => {
           </div>
         </div>
 
-        {/* Terms */}
+        {form.password && (
+          <div className="rounded-[11px] border border-[#F0EAE5] bg-[#FAF7F4] p-3">
+            <div className="mb-2 flex items-center justify-between text-[10.5px] font-semibold">
+              <span className="text-[#68625E]">Password strength</span>
+              <span className={passwordStrength.strong ? "text-emerald-600" : "text-[#E2484D]"}>
+                {passwordStrength.label || "Weak"}
+              </span>
+            </div>
+            <div className="mb-2 h-2 overflow-hidden rounded-full bg-[#EDE7E2]">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  passwordStrength.score >= 4
+                    ? "bg-emerald-500"
+                    : passwordStrength.score >= 3
+                      ? "bg-amber-500"
+                      : passwordStrength.score >= 2
+                        ? "bg-orange-500"
+                        : "bg-red-500"
+                }`}
+                style={{ width: `${(passwordStrength.score / 4) * 100}%` }}
+              />
+            </div>
+            <ul className="grid grid-cols-2 gap-1.5 text-[10.5px]">
+              {passwordRuleList.map((rule) => (
+                <li
+                  key={rule.label}
+                  className={rule.valid ? "text-emerald-600" : "text-[#9E8E85]"}
+                >
+                  {rule.valid ? "✓" : "•"} {rule.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {form.confirmPassword && !errors.confirmPassword && form.password === form.confirmPassword && (
+          <p className="text-[10.5px] font-medium text-emerald-600">✓ Passwords match</p>
+        )}
+
         <label className="flex cursor-pointer items-start gap-2.5">
           <div className="relative mt-0.5 shrink-0">
             <input type="checkbox" checked={form.terms} onChange={set("terms")} className="peer sr-only" />
@@ -243,14 +531,15 @@ const RegisterForm = () => {
         </label>
         {errors.terms && <p className="-mt-1.5 text-[10.5px] font-medium text-[#E2484D]">⚠ {errors.terms}</p>}
 
-        {/* Submit */}
         {authError && (
           <p role="alert" className="text-[12px] font-medium text-[#E2484D]">
             {authError}
           </p>
         )}
+
         <button
-          type="submit" disabled={isSubmitting}
+          type="submit"
+          disabled={isSubmitting}
           className="
             mt-1 flex h-[48px] w-full items-center justify-center gap-2
             rounded-[11px] bg-[#E2484D] text-[14px] font-semibold text-white
@@ -262,11 +551,12 @@ const RegisterForm = () => {
             disabled:cursor-not-allowed disabled:opacity-70
           "
         >
-          {isSubmitting
-            ? <><Loader2 size={16} className="animate-spin" /> Creating account…</>
-            : <>Create Account <ArrowRight size={16} strokeWidth={2.2} /></>}
+          {isSubmitting ? (
+            <><Loader2 size={16} className="animate-spin" /> Creating account…</>
+          ) : (
+            <><span>Create Account</span> <ArrowRight size={16} strokeWidth={2.2} /></>
+          )}
         </button>
-
       </form>
 
       <p className="mt-5 text-center text-[13px] text-[#9E8E85]">
@@ -275,7 +565,6 @@ const RegisterForm = () => {
           Login
         </Link>
       </p>
-
     </div>
   );
 };
