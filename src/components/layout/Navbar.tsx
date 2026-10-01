@@ -7,7 +7,6 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useState, useRef, useEffect } from "react";
 import {
   User,
-  Settings,
   LogOut,
   ChevronDown,
   Droplets,
@@ -87,7 +86,6 @@ const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserD
   const menuItems = [
     { label: "My Profile",    icon: User,     href: "/user-profile"   },
     { label: "View Donor Profile", icon: Droplets, href: isDonor ? "/blood-donor-profile" : "/become-a-donor" },
-    { label: "Settings",      icon: Settings, href: "/settings"       },
   ];
 
   return (
@@ -564,7 +562,6 @@ const Navbar = () => {
                   {[
                     { label: "My Profile",    icon: User,     href: "/user-profile"   },
                     { label: "View Donor Profile", icon: Droplets, href: profileSummary.isDonor ? "/blood-donor-profile" : "/become-a-donor" },
-                    { label: "Settings",      icon: Settings, href: "/settings"       },
                   ].map(({ label, icon: Icon, href }) => (
                     <Link
                       key={label}
