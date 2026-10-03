@@ -160,7 +160,7 @@ const TermsPage = () => {
             ))}
           </div>
 
-          {/* Footer note */}
+ {/* Footer note */}
           <div className="
             mt-10 flex flex-col gap-3
             rounded-[14px] border border-[#E7E0DB]
@@ -173,13 +173,28 @@ const TermsPage = () => {
                 Last updated
               </p>
               <p className="text-[13.5px] text-[#9E8E85]">
-                These terms were last reviewed in{" "}
+                This policy was last reviewed in{" "}
                 <span className="font-semibold text-[#68625E]">2026</span>.
               </p>
             </div>
-            <p className="shrink-0 text-[13px] text-[#B5A89F]">
-              Questions? Contact us after platform launch.
-            </p>
+
+            <div className="flex flex-col gap-0.5 sm:items-end">
+              <p className="text-[12.5px] font-bold uppercase tracking-[0.12em] text-[#C5B8B0]">
+                Questions?
+              </p>
+              <a
+                href="mailto:support@blooddonor.com"
+                className="
+                  text-[13.5px] font-medium text-[#E2484D]
+                  transition-colors duration-150
+                  hover:text-[#C73E43] hover:underline
+                  focus-visible:outline-2 focus-visible:outline-offset-2
+                  focus-visible:outline-[#E2484D]
+                "
+              >
+                support@blooddonor.com
+              </a>
+            </div>
           </div>
 
         </div>
