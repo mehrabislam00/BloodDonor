@@ -3,6 +3,7 @@
 import { authClient, useSession } from "@/lib/auth-client";
 import { Button } from "@heroui/react";
 import Link from "next/link";
+import BrandLogo from "@/components/layout/BrandLogo";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useState, useRef, useEffect } from "react";
 import {
@@ -341,48 +342,7 @@ const Navbar = ({ initialSession }: { initialSession: AuthSession | null }) => {
       >
         {/* ==================== LOGO ==================== */}
         <div className="navbar-start">
-          <Link
-            href="/"
-            aria-label="BloodDonor Home"
-            onClick={closeMenu}
-            className="
-              group flex items-center gap-2.5
-              rounded-xl transition-all duration-300 ease-out
-              hover:-translate-y-[1px]
-            "
-          >
-            <span className="relative flex h-11 w-10 items-center justify-center">
-              <span className="
-                absolute h-8 w-8 rounded-full bg-[#E2484D]/0 blur-xl
-                transition-all duration-500 group-hover:bg-[#E2484D]/30
-              " />
-              <svg
-                viewBox="0 0 40 48"
-                className="
-                  relative h-11 w-10 fill-[#E2484D]
-                  transition-all duration-500 ease-out
-                  group-hover:scale-110 group-hover:rotate-[-3deg]
-                "
-                aria-hidden="true"
-              >
-                <path d="M20 2 C20 2 4 19 4 30 C4 39.5 11.2 46 20 46 C28.8 46 36 39.5 36 30 C36 19 20 2 20 2Z" />
-                <path
-                  d="M13 28 C13 23 17 17 19 14 C15 20 12 24 12 29 C12 31 13 33 15 34 C13.7 32.5 13 30.5 13 28Z"
-                  fill="white"
-                  opacity="0.35"
-                />
-              </svg>
-            </span>
-
-            <span className="text-xl font-bold tracking-[-0.04em] transition-all duration-300">
-              <span className="font-medium text-[#1B1615] transition-colors duration-300 group-hover:text-[#2B2523]">
-                Blood
-              </span>
-              <span className="font-medium text-[#E2484D] transition-colors duration-300 group-hover:text-[#C9363C]">
-                Donor
-              </span>
-            </span>
-          </Link>
+          <BrandLogo onClick={closeMenu} />
         </div>
 
         {/* ==================== DESKTOP NAV ==================== */}

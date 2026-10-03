@@ -1,6 +1,7 @@
 // components/loading/PageLoader.tsx
 
 import React from "react";
+import { BloodDropMark } from "@/components/layout/BrandLogo";
 
 // ── Spinner — use anywhere inline ─────────────────────────────────────────────
 export function LoadingSpinner({ size = 20 }: { size?: number }) {
@@ -42,18 +43,7 @@ function BloodDrop() {
 
       {/* Drop */}
       <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#FFE4E4]">
-        <svg
-          viewBox="0 0 40 48"
-          className="h-6 w-5 fill-[#E2484D] animate-subtle-bob motion-reduce:animate-none"
-          aria-hidden="true"
-        >
-          <path d="M20 2 C20 2 4 19 4 30 C4 39.5 11.2 46 20 46 C28.8 46 36 39.5 36 30 C36 19 20 2 20 2Z" />
-          <path
-            d="M13 28 C13 23 17 17 19 14 C15 20 12 24 12 29 C12 31 13 33 15 34 C13.7 32.5 13 30.5 13 28Z"
-            fill="white"
-            opacity="0.4"
-          />
-        </svg>
+        <BloodDropMark className="h-6 w-5 animate-subtle-bob fill-[#E2484D] motion-reduce:animate-none" />
       </span>
     </div>
   );
@@ -94,8 +84,11 @@ export default function PageLoader({
       aria-live="polite"
       aria-label={message}
       className={`
-        flex items-center justify-center
-        ${fullPage ? "min-h-[70vh]" : "min-h-[45vh]"}
+        flex items-center justify-center mt-20
+        ${fullPage ? "min-h-[70vh]" : "min-h-[45vh]"
+
+
+        }
       `}
     >
       <div className="

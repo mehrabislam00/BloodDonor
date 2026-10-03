@@ -1,7 +1,7 @@
 import React from "react";
-import Link from "next/link";
 import LoginForm from "@/components/auth/LoginForm";
-import { Droplets, ShieldCheck, MapPin } from "lucide-react";
+import { ShieldCheck, MapPin } from "lucide-react";
+import BrandLogo from "@/components/layout/BrandLogo";
 
 const DONOR_CARDS = [
   { initials: "RH", name: "Rahim Hasan",   blood: "O+",  area: "Mirpur",      available: true  },
@@ -55,14 +55,7 @@ const LoginPage = () => {
 
         {/* content */}
         <div className="relative z-10 flex h-full flex-col justify-between p-10 xl:p-12">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#E2484D] shadow-[0_0_22px_rgba(226,72,77,0.55)]">
-              <Droplets size={20} strokeWidth={2.2} className="text-white" />
-            </div>
-            <span className="text-[20px] font-extrabold tracking-[-0.02em] text-white">
-              Blood<span className="text-[#E2484D]">Donor</span>
-            </span>
-          </Link>
+          <BrandLogo variant="inverse" />
 
           <div className="flex flex-col gap-7">
             <div>
@@ -163,14 +156,7 @@ const LoginPage = () => {
           style={{ border: "1px solid rgba(226,72,77,0.04)" }} />
 
         {/* Mobile logo */}
-        <Link href="/" className="absolute left-6 top-6 flex items-center gap-2.5 lg:hidden">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#E2484D] text-white">
-            <Droplets size={18} strokeWidth={2.2} />
-          </div>
-          <span className="text-[18px] font-extrabold tracking-[-0.02em] text-[#1B1615]">
-            Blood<span className="text-[#E2484D]">Donor</span>
-          </span>
-        </Link>
+        <BrandLogo className="absolute left-6 top-6 lg:hidden" size="small" />
 
         {/* Glass form card */}
         <div

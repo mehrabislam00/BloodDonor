@@ -1,141 +1,43 @@
-// src/app/Components/Home/Footer/Footer.tsx
-
 import React from "react";
 import Link from "next/link";
+import BrandLogo from "@/components/layout/BrandLogo";
+import { Mail } from "lucide-react";
 
 const Footer = () => {
   return (
     <footer className="w-full border-t border-[#E7E0DB] bg-[#faf4f0]">
-      <div className="container mx-auto w-full px-4 sm:px-6 lg:px-15">
+      <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
 
         {/* ── Main footer row ── */}
         <div className="grid grid-cols-1 gap-8 py-9 sm:py-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-16">
 
           {/* ── Brand column ── */}
           <div className="max-w-sm">
-            {/* Logo */}
-            <Link
-              href="/"
-              aria-label="BloodDonor Home"
-              className="
-                group
-                flex
-                items-center
-                gap-2.5
-                rounded-xl
-                transition-all
-                duration-300
-                ease-out
-                hover:-translate-y-px
-              "
-            >
-              {/* Blood Drop */}
-              <span
-                className="
-                  relative
-                  flex
-                  h-11
-                  w-10
-                  items-center
-                  justify-center
-                "
-              >
-                {/* Soft glow */}
-                <span
-                  className="
-                    absolute
-                    h-8
-                    w-8
-                    rounded-full
-                    bg-[#E2484D]/0
-                    blur-xl
-                    transition-all
-                    duration-500
-                    group-hover:bg-[#E2484D]/30
-                  "
-                />
+            <BrandLogo />
 
-                <svg
-                  viewBox="0 0 40 48"
-                  className="
-                    relative
-                    h-11
-                    w-10
-                    fill-[#E2484D]
-                    transition-all
-                    duration-500
-                    ease-out
-                    group-hover:scale-110
-                    group-hover:-rotate-3
-                  "
-                  aria-hidden="true"
-                >
-                  <path
-                    d="
-                      M20 2
-                      C20 2 4 19 4 30
-                      C4 39.5 11.2 46 20 46
-                      C28.8 46 36 39.5 36 30
-                      C36 19 20 2 20 2Z
-                    "
-                  />
-
-                  {/* Highlight */}
-                  <path
-                    d="
-                      M13 28
-                      C13 23 17 17 19 14
-                      C15 20 12 24 12 29
-                      C12 31 13 33 15 34
-                      C13.7 32.5 13 30.5 13 28Z
-                    "
-                    fill="white"
-                    opacity="0.35"
-                  />
-                </svg>
-              </span>
-
-              {/* Logo Text */}
-              <span
-                className="
-                  text-xl
-                  font-bold
-                  tracking-[-0.04em]
-                  transition-all
-                  duration-300
-                "
-              >
-                <span
-                  className="
-                    font-medium
-                    text-[#1B1615]
-                    transition-colors
-                    duration-300
-                    group-hover:text-[#2B2523]
-                  "
-                >
-                  Blood
-                </span>
-
-                <span
-                  className="
-                    font-medium
-                    text-[#E2484D]
-                    transition-colors
-                    duration-300
-                    group-hover:text-[#C9363C]
-                  "
-                >
-                  Donor
-                </span>
-              </span>
-            </Link>
-
-            {/* Tagline */}
-            <p className="mt-3 max-w-sm text-[14.5px] leading-relaxed text-[#9E8E85]">
+            <p className="mt-3 text-[14px] leading-relaxed text-[#9E8E85]">
               Helping people across Dhaka find active blood donors with
               clarity, care, and respect.
             </p>
+
+            {/* ── Contact email ── */}
+           {/* ── Contact email ── */}
+<div className="mt-4 flex items-center gap-2 text-[13.5px] text-[#9E8E85]">
+  <Mail size={13} strokeWidth={2} className="shrink-0 text-[#C5B8B0]" />
+  <a
+    href="mailto:support@blooddonor.com"
+    className="
+      font-medium text-[#68625E]
+      underline underline-offset-2 decoration-[#DDD6D1]
+      transition-all duration-150
+      hover:text-[#E2484D] hover:decoration-[#E2484D]/40
+      focus-visible:outline-2 focus-visible:outline-offset-2
+      focus-visible:outline-[#E2484D]
+    "
+  >
+    support@blooddonor.com
+  </a>
+</div>
           </div>
 
           {/* ── Nav columns ── */}
@@ -146,13 +48,12 @@ const Footer = () => {
               <h2 className="mb-3 text-[13px] font-bold text-[#1B1615]">
                 Explore
               </h2>
-
               <ul className="flex flex-col gap-2.5">
                 {[
-                  { label: "Find Donor", href: "/find-a-donor" },
+                  { label: "Find Donor",     href: "/find-a-donor"   },
                   { label: "Become a Donor", href: "/become-a-donor" },
-                  { label: "About", href: "/about" },
-                  { label: "Login", href: "/login" },
+                  { label: "About",          href: "/about"           },
+                  { label: "Login",          href: "/login"           },
                 ].map(({ label, href }) => (
                   <li key={label}>
                     <Link
@@ -171,11 +72,10 @@ const Footer = () => {
               <h2 className="mb-3 text-[13px] font-bold text-[#1B1615]">
                 Legal
               </h2>
-
               <ul className="flex flex-col gap-2.5">
                 {[
-                  { label: "Privacy", href: "/Privacy" },
-                  { label: "Terms", href: "/Terms" },
+                  { label: "Privacy", href: "/privacy" },
+                  { label: "Terms",   href: "/terms"   },
                 ].map(({ label, href }) => (
                   <li key={label}>
                     <Link
@@ -193,15 +93,21 @@ const Footer = () => {
         </div>
 
         {/* ── Bottom bar ── */}
-        <div className="border-t border-[#E7E0DB] py-4 sm:py-5">
-          <p className="mx-auto max-w-2xl text-center text-[12.5px] leading-relaxed text-[#9E8E85]">
+        <div className="
+          flex flex-col items-center gap-1.5
+          border-t border-[#E7E0DB] py-4
+          sm:flex-row sm:justify-between sm:py-5
+        ">
+          <p className="text-center text-[12.5px] leading-relaxed text-[#9E8E85] sm:text-left">
             This platform helps connect{" "}
             <span className="text-[#68625E]">blood seekers</span> with donors.
             It does not provide{" "}
             <span className="text-[#68625E]">medical advice</span> or guarantee
-            donor{" "}
-            <span className="text-[#68625E]">eligibility</span> or{" "}
+            donor <span className="text-[#68625E]">eligibility</span> or{" "}
             <span className="text-[#68625E]">availability</span>.
+          </p>
+          <p className="shrink-0 text-[12px] text-[#C5B8B0]">
+            © {new Date().getFullYear()} BloodDonor
           </p>
         </div>
 
