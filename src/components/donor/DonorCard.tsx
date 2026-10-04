@@ -8,6 +8,7 @@ import {
   Calendar, MessageCircle, Flag,
 } from "lucide-react";
 import type { Donor }                    from "./types";
+import { DonorAvatar }                   from "./DonorAvatar";
 import { DonorProfileModal }             from "./DonorProfileModal";
 import { ReportModal }                   from "./ReportModal";
 import { CallButton }                    from "./CallButton";
@@ -79,6 +80,11 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
     donorAvailable ? "Available Now" : availabilityState.label,
     donorAvailable,
   );
+  const statusPillClass = donorAvailable
+    ? "bg-[#EDFAF3] text-[#1A9E56]"
+    : availabilityState.availability === "Unavailable"
+      ? "bg-[#F5F0EC] text-[#68625E]"
+      : "bg-[#FFFBEB] text-[#B45309]";
 
   // ── Shared WhatsApp fetch — passed to both card and modal ─────────────
 
@@ -154,14 +160,18 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
         {/* Row 1 — Avatar / Name / Blood group */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="
+            <DonorAvatar
+              initials={donor.initials}
+              profileImage={donor.profileImage}
+              width={44}
+              height={44}
+              className="
               flex h-11 w-11 shrink-0 items-center justify-center
               rounded-full bg-[#FFE4E4]
               text-[13px] font-bold text-[#E2484D]
               transition-transform duration-300 group-hover:scale-110
-            ">
-              {donor.initials}
-            </div>
+            "
+            />
             <div>
               {/* verified badge intentionally removed */}
               <span className="text-[15px] font-bold leading-tight text-[#1B1615]">
@@ -194,7 +204,7 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
               Available
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 rounded-full bg-[#F5F0EC] px-2.5 py-[5px] text-[11px] font-semibold text-[#68625E]">
+            <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-[5px] text-[11px] font-semibold ${statusPillClass}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${getAvailabilityDotClass(availabilityState.availability)}`} />
               {availLabel}
             </span>

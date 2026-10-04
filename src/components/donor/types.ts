@@ -2,6 +2,7 @@ export interface Donor {
   id: string;
   initials: string;
   name: string;
+  profileImage?: string | null;
   verified: boolean;
   location: string;
   bloodGroup: string;

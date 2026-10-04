@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { database } from "@/lib/mongodb";
 import { getAvailabilityState } from "@/lib/availability";
 import { normalizeDonationDate } from "@/lib/donation-date";
@@ -7,6 +8,7 @@ export type PublicDonorCard = {
   id: string;
   initials: string;
   name: string;
+  profileImage: string | null;
   verified: boolean;
   location: string;
   bloodGroup: string;
@@ -20,6 +22,7 @@ export type PublicDonorCard = {
 
 type DonorProfileRecord = {
   userId: string;
+  avatarUrl?: string | null;
   isDonor?: boolean;
   area?: string;
   bloodGroup?: string;
@@ -94,6 +97,10 @@ export async function getPublicDonorCards(
   const userIds = [...new Set([...profileIds, ...donorIds])];
   if (userIds.length === 0) return [];
 
+  const validObjectIds = userIds
+    .filter((userId) => /^[0-9a-fA-F]{24}$/.test(userId))
+    .map((userId) => new ObjectId(userId));
+
   const [profiles, users] = await Promise.all([
     database
       .collection<DonorProfileRecord>("userProfiles")
@@ -102,6 +109,7 @@ export async function getPublicDonorCards(
         {
           projection: {
             userId: 1,
+            avatarUrl: 1,
             area: 1,
             bloodGroup: 1,
             availability: 1,
@@ -114,23 +122,40 @@ export async function getPublicDonorCards(
       )
       .toArray(),
     database
-      .collection<{ id: string; name?: string }>("user")
+      .collection<{ id?: string; _id?: ObjectId; name?: string; image?: string | null; fullName?: string }>("user")
       .find(
-        { id: { $in: userIds } },
-        { projection: { id: 1, name: 1 } },
+        {
+          $or: [
+            { id: { $in: userIds } },
+            ...(validObjectIds.length > 0 ? [{ _id: { $in: validObjectIds } }] : []),
+          ],
+        },
+        { projection: { id: 1, _id: 1, name: 1, fullName: 1, image: 1 } },
       )
       .toArray(),
   ]);
 
   const profilesById = new Map(profiles.map((profile) => [profile.userId, profile]));
   const donorsById = new Map(donorRegistry.map((donor) => [donor.userId, donor]));
-  const namesById = new Map(users.map((user) => [user.id, user.name?.trim() || "Donor"]));
+  const usersById = new Map<string, (typeof users)[number]>();
+  for (const user of users) {
+    if (typeof user.id === "string" && user.id.trim()) usersById.set(user.id, user);
+    if (user._id) usersById.set(user._id.toString(), user);
+  }
 
   const donors = userIds
     .map((userId) => {
       const profile = profilesById.get(userId);
       const registeredDonor = donorsById.get(userId);
-      const name = namesById.get(userId) ?? "Donor";
+      const user = usersById.get(userId);
+      const name = (user?.name?.trim() || user?.fullName?.trim() || "").trim();
+      if (!name) return null;
+
+      const profileImage = typeof profile?.avatarUrl === "string" && profile.avatarUrl.trim()
+        ? profile.avatarUrl.trim()
+        : typeof user?.image === "string" && user.image.trim()
+          ? user.image.trim()
+          : null;
       const availabilityState = getAvailabilityState(
         profile?.availability ?? "Unavailable",
         profile?.availableFrom,
@@ -147,6 +172,7 @@ export async function getPublicDonorCards(
         id: userId,
         initials: getInitials(name),
         name,
+        profileImage,
         verified: false,
         location: profile?.area?.trim() || "Location not provided",
         bloodGroup: profile?.bloodGroup?.trim() || "",
@@ -157,7 +183,8 @@ export async function getPublicDonorCards(
         lastActiveAt: lastActiveDate?.getTime() ?? null,
         lastDonationDate,
       };
-    });
+    })
+    .filter((donor): donor is NonNullable<typeof donor> => donor !== null);
 
   return filterAndSortDonors(donors, filters);
 }

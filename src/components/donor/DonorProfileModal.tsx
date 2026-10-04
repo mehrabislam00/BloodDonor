@@ -13,6 +13,7 @@ import { requireAuthentication }    from "@/lib/require-authentication";
 import { useAvailabilityState }     from "@/hooks/useAvailabilityState";
 import { formatDonationDate, getDonationDateRelativeTime } from "@/lib/donation-date";
 import type { Donor }               from "./types";
+import { DonorAvatar }              from "./DonorAvatar";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -90,6 +91,16 @@ export function DonorProfileModal({ donor, onClose, getWhatsAppUrl }: Props) {
   const availLabel   = isAvailable
     ? "Available"
     : (availState?.label ?? donor.availability ?? "Unavailable");
+  const statusDotClass = isAvailable
+    ? "bg-[#1A9E56]"
+    : availState.availability === "Unavailable"
+      ? "bg-[#9E8E85]"
+      : "bg-[#F59E0B]";
+  const statusPillClass = isAvailable
+    ? "bg-[#EDFAF3] text-[#1A9E56]"
+    : availState.availability === "Unavailable"
+      ? "bg-[#F5F0EC] text-[#68625E]"
+      : "bg-[#FFFBEB] text-[#B45309]";
 
   // Lock scroll
   useEffect(() => {
@@ -152,17 +163,21 @@ export function DonorProfileModal({ donor, onClose, getWhatsAppUrl }: Props) {
 
             {/* Avatar — matches DonorCard initials style */}
             <div className="relative shrink-0">
-              <div className="
+              <DonorAvatar
+                initials={donor.initials}
+                profileImage={donor.profileImage}
+                width={48}
+                height={48}
+                className="
                 flex h-12 w-12 items-center justify-center
                 rounded-full bg-[#FFE4E4]
                 text-[14px] font-bold text-[#E2484D]
-              ">
-                {donor.initials}
-              </div>
+              "
+              />
               {/* availability dot */}
               <span className={[
                 "absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white",
-                isAvailable ? "bg-[#1A9E56]" : "bg-[#9E8E85]",
+                statusDotClass,
               ].join(" ")} />
             </div>
 
@@ -178,8 +193,8 @@ export function DonorProfileModal({ donor, onClose, getWhatsAppUrl }: Props) {
                     Available
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F0EC] px-2.5 py-[4px] text-[11px] font-semibold text-[#68625E]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#9E8E85]" />
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-[4px] text-[11px] font-semibold ${statusPillClass}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${statusDotClass}`} />
                     {availLabel}
                   </span>
                 )}
