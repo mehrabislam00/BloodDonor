@@ -2,6 +2,7 @@
 
 import { authClient, useSession } from "@/lib/auth-client";
 import { Button } from "@heroui/react";
+import Image from "next/image";
 import Link from "next/link";
 import BrandLogo from "@/components/layout/BrandLogo";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,15 +32,44 @@ const getNavbarName = (fullName: string): string => {
   return fullName.split(/\s+/)[0];
 };
 
+const UserAvatar = ({ imageUrl, displayName, textClassName }: {
+  imageUrl: string | null;
+  displayName: string;
+  textClassName: string;
+}) => {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+
+  if (imageUrl && failedImageUrl !== imageUrl) {
+    return (
+      <Image
+        src={imageUrl}
+        alt=""
+        width={40}
+        height={40}
+        unoptimized
+        className="h-full w-full rounded-full object-cover"
+        onError={() => setFailedImageUrl(imageUrl)}
+      />
+    );
+  }
+
+  return (
+    <span className={textClassName}>
+      {displayName.charAt(0)}
+    </span>
+  );
+};
+
 // ── UserDropdown ────────────────────────────────────────────────────────────────
 interface UserDropdownProps {
   userName:  string | null | undefined;
   userEmail: string | null | undefined;
+  userImage: string | null;
   isDonor: boolean;
   profileCompletion: number;
 }
 
-const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserDropdownProps) => {
+const UserDropdown = ({ userName, userEmail, userImage, isDonor, profileCompletion }: UserDropdownProps) => {
   const [isOpen,  setIsOpen]  = useState(false);
   const [visible, setVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -132,9 +162,11 @@ const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserD
           {profileCompletion < 100 && (
             <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#FDF9F6] bg-[#E2484D]" aria-label="Profile incomplete" />
           )}
-          <span className="text-[12px] font-bold uppercase leading-none text-[#E2484D]">
-            {displayName.charAt(0)}
-          </span>
+          <UserAvatar
+            imageUrl={userImage}
+            displayName={displayName}
+            textClassName="text-[12px] font-bold uppercase leading-none text-[#E2484D]"
+          />
         </div>
 
         {/* Name */}
@@ -183,9 +215,11 @@ const UserDropdown = ({ userName, userEmail, isDonor, profileCompletion }: UserD
                 flex h-9 w-9 shrink-0 items-center justify-center
                 rounded-full bg-[#FFE4E4]
               ">
-                <span className="text-[14px] font-bold uppercase leading-none text-[#E2484D]">
-                  {displayName.charAt(0)}
-                </span>
+                <UserAvatar
+                  imageUrl={userImage}
+                  displayName={displayName}
+                  textClassName="text-[14px] font-bold uppercase leading-none text-[#E2484D]"
+                />
               </div>
               <div className="min-w-0">
                 <p className="truncate text-[13px] font-semibold text-[#1B1615]">
@@ -288,6 +322,7 @@ const Navbar = ({ initialSession }: { initialSession: AuthSession | null }) => {
   const sessionPending = isPending && !initialSession;
   const userName  = profile?.fullName.trim() || session?.user.name?.trim() || session?.user.email?.split("@")[0] || null;
   const userEmail = profile?.email || session?.user.email || null;
+  const userImage = profile?.avatarUrl?.trim() || session?.user.image?.trim() || null;
   const isDonor = profile?.isDonor === true;
 
   const navItems = [
@@ -394,6 +429,7 @@ const Navbar = ({ initialSession }: { initialSession: AuthSession | null }) => {
             <UserDropdown
               userName={userName}
               userEmail={userEmail}
+              userImage={userImage}
               isDonor={isDonor}
               profileCompletion={profileCompletion}
             />
@@ -511,9 +547,11 @@ const Navbar = ({ initialSession }: { initialSession: AuthSession | null }) => {
                 {/* User info chip */}
                 <div className="flex items-center gap-3 rounded-xl border border-[#EDE7E2] bg-white px-4 py-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFE4E4]">
-                    <span className="text-[13px] font-bold uppercase leading-none text-[#E2484D]">
-                      {getDisplayName(userName).charAt(0)}
-                    </span>
+                    <UserAvatar
+                      imageUrl={userImage}
+                      displayName={getDisplayName(userName)}
+                      textClassName="text-[13px] font-bold uppercase leading-none text-[#E2484D]"
+                    />
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-[13px] font-semibold text-[#1B1615]">
