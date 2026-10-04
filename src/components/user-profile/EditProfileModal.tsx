@@ -276,6 +276,11 @@ export default function EditProfileModal({ user, onClose, onSave }: Props) {
                 options={AVAILABILITY} placeholder="Select" />
             </Field>
 
+            <Field label="Last Donation Date" icon={Calendar}>
+              <input type="date" value={form.lastDonationDate ?? ""}
+                onChange={set("lastDonationDate")} className={ic} />
+            </Field>
+
             <Field label="Address" icon={MapPin}>
               <textarea value={form.address}
                 onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}

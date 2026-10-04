@@ -57,19 +57,32 @@ export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: User
           isDonor: true,
         }),
       });
-      if (!profileResponse.ok) throw new Error("Unable to save your donor profile.");
+      const profileResult = await profileResponse.json() as {
+        error?: string;
+        profile?: { lastDonationDate?: unknown };
+      };
+      if (!profileResponse.ok) {
+        throw new Error(profileResult.error || "Unable to save your donor profile.");
+      }
+      const savedUser = {
+        ...nextUser,
+        lastDonationDate: typeof profileResult.profile?.lastDonationDate === "string"
+          ? profileResult.profile.lastDonationDate
+          : nextUser.lastDonationDate,
+      };
+      setUser(savedUser);
 
       updateProfile({
-        fullName: nextUser.fullName,
-        email: nextUser.email,
-        phone: nextUser.phone,
-        whatsapp: nextUser.whatsapp,
-        bloodGroup: nextUser.bloodGroup,
-        area: nextUser.area,
-        availability: nextUser.availability,
-        availableFrom: nextUser.availableFrom,
-        avatarUrl: nextUser.photoUrl,
-        lastDonationDate: nextUser.lastDonationDate,
+        fullName: savedUser.fullName,
+        email: savedUser.email,
+        phone: savedUser.phone,
+        whatsapp: savedUser.whatsapp,
+        bloodGroup: savedUser.bloodGroup,
+        area: savedUser.area,
+        availability: savedUser.availability,
+        availableFrom: savedUser.availableFrom,
+        avatarUrl: savedUser.photoUrl,
+        lastDonationDate: savedUser.lastDonationDate,
         isDonor: true,
       });
       toast.success({ title: "Donor profile updated", description: "Your donor information has been saved." });

@@ -1,5 +1,6 @@
 import type { UserData } from "./types";
 import { AVAILABILITY_OPTIONS } from "@/lib/availability";
+import { formatDonationDate } from "@/lib/donation-date";
 
 export { AVAILABILITY_OPTIONS };
 
@@ -37,7 +38,7 @@ export function getGreeting(name: string) {
 
 export function formatDate(d: string) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+  return formatDonationDate(d, "en-GB") ?? "—";
 }
 
 export function getInitials(name: string) {

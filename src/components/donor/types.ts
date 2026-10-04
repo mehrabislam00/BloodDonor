@@ -10,6 +10,5 @@ export interface Donor {
   availableFrom?: string | null;
   activeTime: string;
   lastActiveAt: number | null;
-  lastDonation: string;
-  lastDonationAt: number | null;
+  lastDonationDate: string | null;
 }

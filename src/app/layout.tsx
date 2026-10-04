@@ -10,6 +10,7 @@ import { ProfileDataProvider } from "@/components/profile/ProfileDataProvider";
 import type { UserProfile } from "@/components/user-profile/types";
 import { auth } from "@/lib/auth";
 import { getProfileCompletion, getUserProfile } from "@/lib/profile";
+import { getDonorProfile } from "@/lib/donor";
 import { getAvailabilityState } from "@/lib/availability";
 import { headers } from "next/headers";
 
@@ -25,7 +26,12 @@ export const metadata: Metadata = {
 
 async function AppFrame({ children }: { children: ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() });
-  const rawProfile = session?.user ? await getUserProfile(session.user.id) : null;
+  const [rawProfile, donor] = session?.user
+    ? await Promise.all([
+        getUserProfile(session.user.id),
+        getDonorProfile(session.user.id),
+      ])
+    : [null, null];
   const availability = getAvailabilityState(
     typeof rawProfile?.availability === "string" ? rawProfile.availability : "Unavailable",
     typeof rawProfile?.availableFrom === "string" ? rawProfile.availableFrom : null,
@@ -44,7 +50,9 @@ async function AppFrame({ children }: { children: ReactNode }) {
         dateOfBirth: typeof rawProfile?.dateOfBirth === "string" ? rawProfile.dateOfBirth : "",
         gender: typeof rawProfile?.gender === "string" ? rawProfile.gender : "",
         address: typeof rawProfile?.address === "string" ? rawProfile.address : "",
-        lastDonationDate: typeof rawProfile?.lastDonationDate === "string" ? rawProfile.lastDonationDate : "",
+        lastDonationDate: typeof rawProfile?.lastDonationDate === "string" && rawProfile.lastDonationDate !== ""
+          ? rawProfile.lastDonationDate
+          : donor?.lastDonationDate || "",
         isDonor: rawProfile?.isDonor === true,
         availability: availability.availability,
         availableFrom: availability.availableFrom,

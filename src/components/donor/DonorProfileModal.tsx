@@ -11,6 +11,7 @@ import { CallButton }               from "./CallButton";
 import { ContactConfirmationModal } from "./ContactConfirmationModal";
 import { requireAuthentication }    from "@/lib/require-authentication";
 import { useAvailabilityState }     from "@/hooks/useAvailabilityState";
+import { formatDonationDate, getDonationDateRelativeTime } from "@/lib/donation-date";
 import type { Donor }               from "./types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -39,13 +40,6 @@ function formatDateTime(ts: number | null): string | null {
     weekday: "short", month: "long", day: "numeric",
     year: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
   });
-}
-
-function formatDate(str: string | null | undefined): string | null {
-  if (!str) return null;
-  const d = new Date(str);
-  if (isNaN(d.getTime())) return null;
-  return d.toLocaleString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
 // ── Detail row — matches the InfoRow style from the dashboard ─────────────
@@ -121,12 +115,12 @@ export function DonorProfileModal({ donor, onClose, getWhatsAppUrl }: Props) {
   // Formatted values
   const lastActiveFull   = formatDateTime(donor.lastActiveAt);
   const lastActiveRel    = relativeTime(donor.lastActiveAt) ?? donor.activeTime ?? null;
-  const lastDonationFull = formatDate(donor.lastDonation || null);
-  const lastDonationRel  = relativeTime(donor.lastDonationAt);
+  const lastDonationFull = formatDonationDate(donor.lastDonationDate);
+  const lastDonationRel  = getDonationDateRelativeTime(donor.lastDonationDate);
 
   const lastDonationPrimary  = lastDonationFull
     ? `${lastDonationFull}${lastDonationRel ? ` · ${lastDonationRel}` : ""}`
-    : "No donation recorded";
+    : "Not provided";
 
   const lastActivePrimary = lastActiveFull ?? lastActiveRel ?? "—";
   const lastActiveSec     = lastActiveFull && lastActiveRel ? lastActiveRel : undefined;

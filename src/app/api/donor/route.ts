@@ -6,6 +6,7 @@ import {
   getAvailabilityState,
   normalizeAvailability,
 } from "@/lib/availability";
+import { normalizeDonationDate } from "@/lib/donation-date";
 import { NextResponse } from "next/server";
 
 async function getSession(request: Request) {
@@ -30,7 +31,9 @@ export async function GET(request: Request) {
       fullName: session.user.name || "",
       email: session.user.email || "",
       isDonor: profile.isDonor === true,
-      lastDonationDate: donor?.lastDonationDate || profile.lastDonationDate || "",
+      lastDonationDate: typeof profile.lastDonationDate === "string" && profile.lastDonationDate !== ""
+        ? profile.lastDonationDate
+        : donor?.lastDonationDate || "",
     },
   });
 }
@@ -49,13 +52,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const profile = await getUserProfile(session.user.id);
+  const [profile, existingDonor] = await Promise.all([
+    getUserProfile(session.user.id),
+    getDonorProfile(session.user.id),
+  ]);
   const phone = typeof body.phone === "string" ? body.phone.trim() : typeof profile.phone === "string" ? profile.phone : "";
   const whatsapp = typeof body.whatsapp === "string" ? body.whatsapp.trim() : typeof profile.whatsapp === "string" ? profile.whatsapp : "";
   const area = typeof body.area === "string" ? body.area.trim() : typeof profile.area === "string" ? profile.area : "";
   const bloodGroup = typeof body.bloodGroup === "string" ? body.bloodGroup.trim() : typeof profile.bloodGroup === "string" ? profile.bloodGroup : "";
   const availability = typeof body.availability === "string" ? body.availability.trim() : typeof profile.availability === "string" ? profile.availability : "";
-  const lastDonationDate = typeof body.lastDonationDate === "string" ? body.lastDonationDate.trim() : "";
+  const lastDonationDate = Object.hasOwn(body, "lastDonationDate")
+    ? typeof body.lastDonationDate === "string"
+      ? normalizeDonationDate(body.lastDonationDate.trim())
+      : null
+    : typeof profile.lastDonationDate === "string" && profile.lastDonationDate !== ""
+      ? profile.lastDonationDate
+      : existingDonor?.lastDonationDate || "";
 
   if (!phone || !bloodGroup || !area || !availability) {
     return NextResponse.json(
@@ -64,7 +76,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (bloodGroup.length > 4 || lastDonationDate.length > 10) {
+  if (lastDonationDate === null || bloodGroup.length > 4 || lastDonationDate.length > 10) {
     return NextResponse.json({ error: "Invalid donor information." }, { status: 400 });
   }
 
@@ -110,7 +122,7 @@ export async function POST(request: Request) {
       bloodGroup,
       availability: availabilityRecord.availability,
       availableFrom: availabilityRecord.availableFrom,
-      lastDonationDate,
+      lastDonationDate: donor?.lastDonationDate ?? lastDonationDate,
       isDonor: true,
       fullName: session.user.name || "",
       email: session.user.email || "",

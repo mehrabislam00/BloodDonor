@@ -11,7 +11,8 @@ import {
   getAvailabilityState,
   normalizeAvailability,
 } from "@/lib/availability";
-import { updateDonorProfile } from "@/lib/donor";
+import { getDonorProfile, updateDonorProfile } from "@/lib/donor";
+import { normalizeDonationDate } from "@/lib/donation-date";
 import { NextResponse } from "next/server";
 
 async function getSession(request: Request) {
@@ -25,9 +26,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const profile = await getUserProfile(session.user.id);
+  const [profile, donor] = await Promise.all([
+    getUserProfile(session.user.id),
+    getDonorProfile(session.user.id),
+  ]);
   return NextResponse.json({
-    profile,
+    profile: {
+      ...profile,
+      lastDonationDate: typeof profile.lastDonationDate === "string" && profile.lastDonationDate !== ""
+        ? profile.lastDonationDate
+        : donor?.lastDonationDate || "",
+    },
     profileCompletion: getProfileCompletion(profile, session.user.name || "", session.user.email || ""),
   });
 }
@@ -62,6 +71,14 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Invalid blood group" }, { status: 400 });
   }
 
+  if (Object.hasOwn(body, "lastDonationDate")) {
+    const lastDonationDate = normalizeDonationDate(body.lastDonationDate);
+    if (lastDonationDate === null) {
+      return NextResponse.json({ error: "Invalid last donation date." }, { status: 400 });
+    }
+    updates.lastDonationDate = lastDonationDate;
+  }
+
   const currentProfile = await getUserProfile(session.user.id);
   if (typeof updates.availability === "string" && updates.availability.trim()) {
     const requested = createAvailabilityRecord(updates.availability);
@@ -94,12 +111,16 @@ export async function PATCH(request: Request) {
   }
 
   await updateUserProfile(session.user.id, updates);
-  if (updates.isDonor === true && typeof updates.lastDonationDate === "string") {
-    await updateDonorProfile(session.user.id, { lastDonationDate: updates.lastDonationDate });
-  }
+  const donor = (updates.isDonor === true || currentProfile.isDonor === true)
+    && typeof updates.lastDonationDate === "string"
+    ? await updateDonorProfile(session.user.id, { lastDonationDate: updates.lastDonationDate })
+    : null;
+  const persistedDonationDate = donor?.lastDonationDate
+    ?? updates.lastDonationDate
+    ?? currentProfile.lastDonationDate;
 
   return NextResponse.json({
-    profile: { ...currentProfile, ...updates },
+    profile: { ...currentProfile, ...updates, lastDonationDate: persistedDonationDate },
     user: {
       name: typeof body.fullName === "string" ? body.fullName.trim() : session.user.name,
       email: session.user.email,

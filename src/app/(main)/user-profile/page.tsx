@@ -5,6 +5,7 @@
 import type { UserProfile } from "@/components/user-profile/types";
 import { auth } from "@/lib/auth";
 import { getUserProfile } from "@/lib/profile";
+import { getDonorProfile } from "@/lib/donor";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import UserProfileClient from "@/components/user-profile/UserProfileClient";
@@ -20,7 +21,10 @@ async function getUser(): Promise<UserProfile> {
 
   if (!session?.user) redirect("/login");
 
-  const profile = await getUserProfile(session.user.id);
+  const [profile, donor] = await Promise.all([
+    getUserProfile(session.user.id),
+    getDonorProfile(session.user.id),
+  ]);
   const availability = getAvailabilityState(
     typeof profile.availability === "string" ? profile.availability : "Unavailable",
     typeof profile.availableFrom === "string" ? profile.availableFrom : null,
@@ -38,6 +42,9 @@ async function getUser(): Promise<UserProfile> {
     dateOfBirth: typeof profile.dateOfBirth === "string" ? profile.dateOfBirth : "",
     gender: typeof profile.gender === "string" ? profile.gender : "",
     address: typeof profile.address === "string" ? profile.address : "",
+    lastDonationDate: typeof profile.lastDonationDate === "string" && profile.lastDonationDate !== ""
+      ? profile.lastDonationDate
+      : donor?.lastDonationDate || "",
     isDonor: profile.isDonor === true,
     availability: availability.availability,
     availableFrom: availability.availableFrom,

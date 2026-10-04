@@ -16,6 +16,7 @@ import { toast }                         from "@/lib/toast";
 import { buildWhatsAppUrl }              from "@/lib/phone";
 import { requireAuthentication }         from "@/lib/require-authentication";
 import { useAvailabilityState }           from "@/hooks/useAvailabilityState";
+import { getDonationDateRelativeTime }   from "@/lib/donation-date";
 export type { Donor } from "./types";
 
 // ── Helpers (unchanged from previous version) ─────────────────────────────
@@ -66,13 +67,7 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
     return donor.activeTime || null;
   })();
 
-  const lastDonationLabel = (() => {
-    if (donor.lastDonationAt) {
-      const rel = relativeTime(donor.lastDonationAt);
-      if (rel) return rel;
-    }
-    return donor.lastDonation || null;
-  })();
+  const lastDonationLabel = getDonationDateRelativeTime(donor.lastDonationDate);
 
   const availabilityState = useAvailabilityState(
     donor.availability ?? (donor.available ? "Available Now" : "Unavailable"),
@@ -221,7 +216,7 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
         ) : (
           <div className="mt-3.5 flex items-center gap-1.5 text-[12.5px] text-[#C5B8B0]">
             <Calendar size={13} strokeWidth={1.8} className="shrink-0" />
-            No donation recorded
+            Not provided
           </div>
         )}
 

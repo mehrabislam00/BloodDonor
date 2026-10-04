@@ -31,7 +31,9 @@ export default async function DashboardPage() {
     whatsapp: typeof profile.whatsapp === "string" ? profile.whatsapp : "",
     bloodGroup: typeof profile.bloodGroup === "string" ? profile.bloodGroup : "",
     area: typeof profile.area === "string" ? profile.area : "",
-    lastDonationDate: donor?.lastDonationDate || (typeof profile.lastDonationDate === "string" ? profile.lastDonationDate : ""),
+    lastDonationDate: typeof profile.lastDonationDate === "string" && profile.lastDonationDate !== ""
+      ? profile.lastDonationDate
+      : donor?.lastDonationDate || "",
     availability: availability.availability,
     availableFrom: availability.availableFrom,
     contactEnabled: availability.available,
