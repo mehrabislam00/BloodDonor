@@ -17,6 +17,7 @@ import { buildWhatsAppUrl }              from "@/lib/phone";
 import { requireAuthentication }         from "@/lib/require-authentication";
 import { useAvailabilityState }           from "@/hooks/useAvailabilityState";
 import { getDonationDateRelativeTime }   from "@/lib/donation-date";
+import { getAvailabilityDotClass }      from "@/lib/availability";
 export type { Donor } from "./types";
 
 // ── Helpers (unchanged from previous version) ─────────────────────────────
@@ -194,7 +195,7 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
             </span>
           ) : (
             <span className="flex items-center gap-1.5 rounded-full bg-[#F5F0EC] px-2.5 py-[5px] text-[11px] font-semibold text-[#68625E]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#9E8E85]" />
+              <span className={`h-1.5 w-1.5 rounded-full ${getAvailabilityDotClass(availabilityState.availability)}`} />
               {availLabel}
             </span>
           )}

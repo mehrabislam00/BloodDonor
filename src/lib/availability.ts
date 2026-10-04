@@ -37,6 +37,22 @@ export function normalizeAvailability(value: string): string | null {
   return `Available in ${amount} ${unit}`;
 }
 
+export function getAvailabilityDotClass(value: string): string {
+  const availability = normalizeAvailability(value);
+  if (availability === "Available Now") return "bg-[#1A9E56]";
+  if (availability === "Unavailable" || !availability) return "bg-[#9E8E85]";
+
+  const duration = availability.match(/^Available in (\d+) (Days|Months)$/);
+  if (!duration) return "bg-[#9E8E85]";
+
+  const amount = Number(duration[1]);
+  const days = duration[2] === "Days" ? amount : amount * 30;
+  if (days <= 15) return "bg-amber-300";
+  if (days <= 30) return "bg-amber-400";
+  if (days <= 60) return "bg-orange-500";
+  return "bg-orange-700";
+}
+
 function addMonths(date: Date, amount: number): Date {
   const result = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1));
   const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();

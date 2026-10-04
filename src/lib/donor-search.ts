@@ -1,3 +1,5 @@
+import { normalizeAvailability } from "@/lib/availability";
+
 const RECENT_ACTIVITY_WINDOW_MS = 6 * 60 * 60 * 1000;
 const ACTIVE_NOW_WINDOW_MS = 60 * 60 * 1000;
 
@@ -5,13 +7,15 @@ export type DonorSearchFilters = {
   bloodGroup: string;
   area: string;
   activity: string;
+  availability: string;
 };
 
 export type SearchableDonor = {
   id: string;
   bloodGroup: string;
   location: string;
-  availability: string;
+  available: boolean;
+  availabilityStatus: string;
   availableFrom?: string | null;
   lastActiveAt: number | null;
 };
@@ -48,11 +52,21 @@ export function filterAndSortDonors<T extends SearchableDonor>(
       return false;
     }
 
-    if (filters.activity === "now") {
-      return hasActivityWithin(donor.lastActiveAt, now, ACTIVE_NOW_WINDOW_MS);
+    if (filters.activity === "now" && !hasActivityWithin(donor.lastActiveAt, now, ACTIVE_NOW_WINDOW_MS)) {
+      return false;
     }
-    if (filters.activity === "recent") {
-      return hasRecentActivity(donor.lastActiveAt, now);
+    if (filters.activity === "recent" && !hasRecentActivity(donor.lastActiveAt, now)) {
+      return false;
+    }
+
+    if (filters.availability) {
+      const selectedAvailability = normalizeAvailability(filters.availability);
+      const donorAvailability = normalizeAvailability(donor.availabilityStatus);
+      if (!selectedAvailability || !donorAvailability) return false;
+      if (selectedAvailability === "Available Now") {
+        return donor.available && donorAvailability === "Available Now";
+      }
+      return !donor.available && donorAvailability === selectedAvailability;
     }
 
     return true;

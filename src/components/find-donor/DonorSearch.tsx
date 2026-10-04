@@ -10,6 +10,7 @@ import {
   Check,
   Clock,
 } from "lucide-react";
+import { AVAILABILITY_OPTIONS, getAvailabilityDotClass } from "@/lib/availability";
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -24,6 +25,14 @@ const AREAS = [
   "Banani",
   "Motijheel",
   "Farmgate",
+];
+const DONOR_AVAILABILITY_OPTIONS = [
+  { value: "", label: "All Availability", dot: "bg-[#9E8E85]" },
+  ...AVAILABILITY_OPTIONS.map((label) => ({
+    value: label,
+    label,
+    dot: getAvailabilityDotClass(label),
+  })),
 ];
 
 const ACTIVITY_OPTIONS = [
@@ -41,6 +50,7 @@ export type DonorSearchFilters = {
   bloodGroup: string;
   area: string;
   activity: string;
+  availability: string;
 };
 
 // ── CustomSelect ──────────────────────────────────────────────────────────
@@ -201,7 +211,8 @@ export function DonorSearch({
 }) {
   const [bloodGroup, setBloodGroup] = useState("");
   const [area, setArea] = useState("");
-  const [activity, setActivity] = useState("all"); // default: All Donors
+  const [activity, setActivity] = useState("");
+  const [availability, setAvailability] = useState("");
   const [errors, setErrors] = useState<SearchErrors>({});
   const [isSearching, setIsSearching] = useState(false);
 
@@ -220,7 +231,7 @@ export function DonorSearch({
     if (Object.keys(newErrors).length > 0) return;
 
     setIsSearching(true);
-    onSearch({ bloodGroup, area, activity });
+    onSearch({ bloodGroup, area, activity, availability });
     setIsSearching(false);
   };
 
@@ -250,18 +261,18 @@ export function DonorSearch({
             </h2>
           </div>
 
-          {/* ── Fields: 4-col on lg ── */}
+          {/* ── Fields: 5-col on lg ── */}
           <div
             className="
             grid w-full grid-cols-1 gap-4
-            lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_172px]
+            lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_172px]
             lg:items-start
           "
           >
             {/* ── Blood Group ── */}
             <div className="min-w-0">
               <p className="mb-2 text-[13px] font-semibold text-[#403A37]">
-                Blood Group
+                Blood Group <span className="text-[#E2484D]">*</span>
               </p>
               <CustomSelect
                 value={bloodGroup}
@@ -301,7 +312,7 @@ export function DonorSearch({
             {/* ── Area ── */}
             <div className="min-w-0">
               <p className="mb-2 text-[13px] font-semibold text-[#403A37]">
-                Area
+                Area <span className="text-[#E2484D]">*</span>
               </p>
               <CustomSelect
                 value={area}
@@ -380,6 +391,34 @@ export function DonorSearch({
                 )}
               />
               {/* fixed-height slot keeps layout from shifting */}
+              <div className="h-5 pt-1" />
+            </div>
+
+            {/* ── Availability ── */}
+            <div className="min-w-0">
+              <p className="mb-2 text-[13px] font-semibold text-[#403A37]">
+                Availability
+              </p>
+              <CustomSelect
+                value={availability}
+                onChange={setAvailability}
+                options={DONOR_AVAILABILITY_OPTIONS}
+                placeholder="All Availability"
+                renderOption={({ label, dot }) => (
+                  <span className="flex items-center gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F0EDEA] text-[#9E8E85]">
+                      <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
+                    </span>
+                    <span className="font-medium">{label}</span>
+                  </span>
+                )}
+                renderValue={({ label, dot }) => (
+                  <span className="flex items-center gap-2">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
+                    {label}
+                  </span>
+                )}
+              />
               <div className="h-5 pt-1" />
             </div>
 

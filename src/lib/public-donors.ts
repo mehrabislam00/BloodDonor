@@ -12,6 +12,7 @@ export type PublicDonorCard = {
   bloodGroup: string;
   available: boolean;
   availability: string;
+  availabilityStatus: string;
   availableFrom: string | null;
   lastActiveAt: number | null;
   lastDonationDate: string | null;
@@ -57,7 +58,7 @@ function parseDate(value: Date | string | number | undefined): Date | null {
 }
 
 export async function getPublicDonorCards(
-  filters: DonorSearchFilters = { bloodGroup: "", area: "", activity: "all" },
+  filters: DonorSearchFilters = { bloodGroup: "", area: "", activity: "all", availability: "" },
 ): Promise<PublicDonorCard[]> {
   const [registeredProfiles, donorRegistry] = await Promise.all([
     database
@@ -151,6 +152,7 @@ export async function getPublicDonorCards(
         bloodGroup: profile?.bloodGroup?.trim() || "",
         available: availabilityState.available,
         availability: availabilityState.available ? "Available Now" : availabilityState.label,
+        availabilityStatus: availabilityState.availability,
         availableFrom: availabilityState.availableFrom,
         lastActiveAt: lastActiveDate?.getTime() ?? null,
         lastDonationDate,

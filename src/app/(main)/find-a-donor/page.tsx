@@ -16,7 +16,8 @@ const Find_A_Donor = () => {
   const [filters, setFilters] = useState<DonorSearchFilters>({
     bloodGroup: "",
     area: "",
-    activity: "all",
+    activity: "",
+    availability: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -28,6 +29,7 @@ const Find_A_Donor = () => {
       bloodGroup: filters.bloodGroup,
       area: filters.area,
       activity: filters.activity,
+      availability: filters.availability,
     });
 
     fetch(`/api/donors?${params.toString()}`, { cache: "no-store", signal: controller.signal })
