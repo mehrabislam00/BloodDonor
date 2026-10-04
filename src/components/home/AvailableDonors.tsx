@@ -1,12 +1,31 @@
-import React from "react";
+"use client";
+
+import React, { useMemo } from "react";
 import Link from "next/link";
 import DonorCard, { type Donor } from "@/components/donor/DonorCard";
-import { getPublicDonorCards } from "@/lib/public-donors";
 
-const AvailableDonors = async () => {
-  const donors: Donor[] = (await getPublicDonorCards())
-    .filter((donor) => donor.available)
-    .slice(0, 3);
+type AvailableDonorsProps = {
+  donors: Donor[];
+  selectedBloodGroup: string | null;
+};
+
+const AvailableDonors = ({ donors, selectedBloodGroup }: AvailableDonorsProps) => {
+  const matchingDonors = useMemo(() => {
+    return donors
+      .filter((donor) => (
+        !selectedBloodGroup ||
+        donor.bloodGroup.trim().toUpperCase() === selectedBloodGroup
+      ))
+      .sort((a, b) => {
+        const availabilityOrder = Number(b.available) - Number(a.available);
+        if (availabilityOrder !== 0) return availabilityOrder;
+
+        const activityOrder = (b.lastActiveAt ?? -1) - (a.lastActiveAt ?? -1);
+        if (activityOrder !== 0) return activityOrder;
+
+        return a.name.localeCompare(b.name);
+      });
+  }, [donors, selectedBloodGroup]);
 
   return (
     <section className="w-full bg-[#faf4f0] py-16 sm:py-20">
@@ -46,10 +65,17 @@ const AvailableDonors = async () => {
 
         {/* ── Cards grid ── */}
         <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {donors.slice(0, 3).map((donor) => (
+          {matchingDonors.slice(0, 3).map((donor) => (
             <DonorCard key={donor.id} donor={donor} />
           ))}
         </div>
+        {matchingDonors.length === 0 && (
+          <p className="mt-8 text-center text-[14px] text-[#9E8E85]">
+            {selectedBloodGroup
+              ? `No ${selectedBloodGroup} donors are currently available.`
+              : "No donor profiles are registered yet."}
+          </p>
+        )}
 
       </div>
     </section>

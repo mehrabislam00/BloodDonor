@@ -9,6 +9,7 @@ export type PublicDonorCard = {
   bloodGroup: string;
   available: boolean;
   activeTime: string;
+  lastActiveAt: number | null;
   lastDonation: string;
 };
 
@@ -131,6 +132,7 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
       const registeredDonor = donorsById.get(userId);
       const name = namesById.get(userId) ?? "Donor";
       const availability = profile?.availability?.trim().toLowerCase();
+      const lastActiveDate = parseDate(profile?.updatedAt ?? registeredDonor?.updatedAt);
       return {
         id: userId,
         initials: getInitials(name),
@@ -139,10 +141,8 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
         location: profile?.area?.trim() || "Location not provided",
         bloodGroup: profile?.bloodGroup?.trim() || "",
         available: availability === "available" || availability === "available now",
-        activeTime: formatElapsed(
-          parseDate(profile?.updatedAt ?? registeredDonor?.updatedAt),
-          "profile",
-        ),
+        activeTime: formatElapsed(lastActiveDate, "profile"),
+        lastActiveAt: lastActiveDate?.getTime() ?? null,
         lastDonation: formatElapsed(
           parseDate(registeredDonor?.lastDonationDate ?? profile?.lastDonationDate),
           "donation",

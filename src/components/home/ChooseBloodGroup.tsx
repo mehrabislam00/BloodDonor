@@ -1,11 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-const ChooseBloodGroup = () => {
-  const [selected, setSelected] = useState<string | null>(null);
+type ChooseBloodGroupProps = {
+  selected: string | null;
+  onSelectionChange: (bloodGroup: string | null) => void;
+};
+
+const ChooseBloodGroup = ({ selected, onSelectionChange }: ChooseBloodGroupProps) => {
 
   return (
     <section className="w-full bg-[#FAF7F4] py-16 sm:py-20">
@@ -33,7 +37,8 @@ const ChooseBloodGroup = () => {
     return (
       <button
         key={group}
-        onClick={() => setSelected(isSelected ? null : group)}
+        type="button"
+        onClick={() => onSelectionChange(isSelected ? null : group)}
         className={[
           "h-[64px] min-w-[74px] rounded-[16px] border px-7",
           "text-[16px] font-semibold",
@@ -66,7 +71,7 @@ const ChooseBloodGroup = () => {
             <span className="font-semibold text-[#E2484D]">{selected}</span>
             {" "}donors —{" "}
             <button
-              onClick={() => setSelected(null)}
+              onClick={() => onSelectionChange(null)}
               className="underline underline-offset-2 transition-colors hover:text-[#1B1615]"
             >
               clear

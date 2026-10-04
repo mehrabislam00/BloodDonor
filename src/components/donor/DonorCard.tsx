@@ -24,6 +24,7 @@ export interface Donor {
   bloodGroup:   string;
   available:    boolean;
   activeTime:   string;
+  lastActiveAt: number | null;
   lastDonation: string;
 }
 
