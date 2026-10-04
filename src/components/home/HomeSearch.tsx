@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Search, Loader2, MapPin, Droplets, ChevronDown, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -141,6 +142,7 @@ function CustomSelect({
 // ── HomeSearch ────────────────────────────────────────────────────────────
 
 export function HomeSearch() {
+  const router = useRouter();
   const [bloodGroup,  setBloodGroup]  = useState("");
   const [area,        setArea]        = useState("");
   const [errors,      setErrors]      = useState<SearchErrors>({});
@@ -161,13 +163,8 @@ export function HomeSearch() {
     if (Object.keys(newErrors).length > 0) return;
 
     setIsSearching(true);
-    try {
-      await new Promise((r) => setTimeout(r, 1800));
-      console.log({ bloodGroup, area });
-      // router.push(`/Find_A_Doner?bloodGroup=${bloodGroup}&area=${area}`);
-    } finally {
-      setIsSearching(false);
-    }
+    const params = new URLSearchParams({ bloodGroup, area });
+    router.push(`/find-a-donor?${params.toString()}`);
   };
 
   return (

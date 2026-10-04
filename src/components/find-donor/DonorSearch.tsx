@@ -206,11 +206,13 @@ function CustomSelect({
 
 export function DonorSearch({
   onSearch,
+  initialFilters,
 }: {
   onSearch: (filters: DonorSearchFilters) => void;
+  initialFilters?: Pick<DonorSearchFilters, "bloodGroup" | "area">;
 }) {
-  const [bloodGroup, setBloodGroup] = useState("");
-  const [area, setArea] = useState("");
+  const [bloodGroup, setBloodGroup] = useState(initialFilters?.bloodGroup ?? "");
+  const [area, setArea] = useState(initialFilters?.area ?? "");
   const [activity, setActivity] = useState("");
   const [availability, setAvailability] = useState("");
   const [errors, setErrors] = useState<SearchErrors>({});
