@@ -1,3 +1,4 @@
+
 // components/loading/PageLoader.tsx
 
 import React from "react";
@@ -19,6 +20,7 @@ export function LoadingSpinner({ size = 20 }: { size?: number }) {
           border-[2px] border-[#E2484D]/15
         "
       />
+
       {/* Spinning arc */}
       <span
         style={{ width: size, height: size }}
@@ -58,7 +60,8 @@ function LoadingDots() {
           key={delay}
           style={{ animationDelay: `${delay}ms` }}
           className="
-            h-[3px] w-[3px] rounded-full bg-[#9E8E85]
+            h-[3px] w-[3px] rounded-full
+            bg-[#9E8E85]
             animate-subtle-bounce
             motion-reduce:animate-none
           "
@@ -71,32 +74,43 @@ function LoadingDots() {
 // ── PageLoader ─────────────────────────────────────────────────────────────────
 interface PageLoaderProps {
   fullPage?: boolean;
-  message?:  string;
+  message?: string;
 }
 
 export default function PageLoader({
   fullPage = false,
-  message  = "Loading",
+  message = "Loading",
 }: PageLoaderProps) {
   return (
     <div
       role="status"
       aria-live="polite"
       aria-label={message}
-      className={`
-        flex items-center justify-center mt-20
-        ${fullPage ? "min-h-[70vh]" : "min-h-[45vh]"
-
-
-        }
-      `}
+      className={
+        fullPage
+          ? `
+            fixed inset-0 z-[9999]
+            flex min-h-screen w-screen
+            items-center justify-center
+            bg-[#f9f4f0]
+          `
+          : `
+            flex min-h-[45vh]
+            items-center justify-center
+            bg-[#f9f4f0]
+          `
+      }
     >
-      <div className="
-        flex flex-col items-center gap-5
-        rounded-[20px] border border-[#EDE7E2] bg-white
-        px-10 py-8
-        shadow-[0_8px_32px_rgba(27,22,21,0.07)]
-      ">
+      <div
+        className="
+          flex flex-col items-center gap-5
+          rounded-[20px]
+          border border-[#EDE7E2]
+          bg-[#f9f4f0]
+          px-10 py-8
+          shadow-[0_8px_32px_rgba(27,22,21,0.07)]
+        "
+      >
         <BloodDrop />
 
         <div className="flex flex-col items-center gap-1.5">
@@ -104,8 +118,10 @@ export default function PageLoader({
             <span className="text-[13.5px] font-semibold text-[#1B1615]">
               {message}
             </span>
+
             <LoadingDots />
           </div>
+
           <span className="text-[11.5px] text-[#B5A89F]">
             Please wait a moment
           </span>
@@ -114,3 +130,4 @@ export default function PageLoader({
     </div>
   );
 }
+
