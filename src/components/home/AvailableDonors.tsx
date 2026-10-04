@@ -1,44 +1,13 @@
 import React from "react";
 import Link from "next/link";
 import DonorCard, { type Donor } from "@/components/donor/DonorCard";
+import { getPublicDonorCards } from "@/lib/public-donors";
 
-const DONORS: Donor[] = [
-  {
-    id: "1",
-    initials: "RH",
-    name: "Rahim Hasan",
-    verified: true,
-    location: "Mirpur",
-    bloodGroup: "O+",
-    available: true,
-    activeTime: "Active 2 hours ago",
-    lastDonation: "2 months ago",
-  },
-  {
-    id: "2",
-    initials: "NJ",
-    name: "Nusrat Jahan",
-    verified: true,
-    location: "Dhanmondi",
-    bloodGroup: "A+",
-    available: true,
-    activeTime: "Active 18 minutes ago",
-    lastDonation: "4 months ago",
-  },
-  {
-    id: "3",
-    initials: "SK",
-    name: "Samiul Karim",
-    verified: true,
-    location: "Uttara",
-    bloodGroup: "B-",
-    available: true,
-    activeTime: "Active Today",
-    lastDonation: "5 months ago",
-  },
-];
+const AvailableDonors = async () => {
+  const donors: Donor[] = (await getPublicDonorCards())
+    .filter((donor) => donor.available)
+    .slice(0, 3);
 
-const AvailableDonors = () => {
   return (
     <section className="w-full bg-[#faf4f0] py-16 sm:py-20">
       <div className="container mx-auto w-full px-4 sm:px-6 lg:px-8">
@@ -77,7 +46,7 @@ const AvailableDonors = () => {
 
         {/* ── Cards grid ── */}
         <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {DONORS.map((donor) => (
+          {donors.slice(0, 3).map((donor) => (
             <DonorCard key={donor.id} donor={donor} />
           ))}
         </div>

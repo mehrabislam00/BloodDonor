@@ -1,227 +1,59 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AlignJustify } from "lucide-react";
 import DonorCard, { type Donor } from "@/components/donor/DonorCard";
-import { DonorSearch } from "@/components/find-donor/DonorSearch";
+import { DonorSearch, type DonorSearchFilters } from "@/components/find-donor/DonorSearch";
+import { toast } from "@/lib/toast";
 
-
-// ── Mock donor data ───────────────────────────────────────────────────────
-
-const ALL_DONORS: Donor[] = [
-  {
-    id: "1",
-    initials: "RH",
-    name: "Rahim Hasan",
-    verified: true,
-    location: "Mirpur",
-    bloodGroup: "O+",
-    available: true,
-    activeTime: "Active 2 hours ago",
-    lastDonation: "2 months ago",
-  },
-  {
-    id: "2",
-    initials: "NJ",
-    name: "Nusrat Jahan",
-    verified: true,
-    location: "Dhanmondi",
-    bloodGroup: "A+",
-    available: true,
-    activeTime: "Active 18 minutes ago",
-    lastDonation: "4 months ago",
-  },
-  {
-    id: "3",
-    initials: "SK",
-    name: "Samiul Karim",
-    verified: true,
-    location: "Uttara",
-    bloodGroup: "B-",
-    available: true,
-    activeTime: "Active Today",
-    lastDonation: "5 months ago",
-  },
-  {
-    id: "4",
-    initials: "FA",
-    name: "Farzana Akter",
-    verified: true,
-    location: "Mohammadpur",
-    bloodGroup: "AB+",
-    available: false,
-    activeTime: "Active Yesterday",
-    lastDonation: "3 months ago",
-  },
-  {
-    id: "5",
-    initials: "TA",
-    name: "Tanvir Ahmed",
-    verified: true,
-    location: "Bashundhara",
-    bloodGroup: "O-",
-    available: true,
-    activeTime: "Active 3 hours ago",
-    lastDonation: "6 months ago",
-  },
-  {
-    id: "6",
-    initials: "MR",
-    name: "Maisha Rahman",
-    verified: true,
-    location: "Banani",
-    bloodGroup: "A-",
-    available: true,
-    activeTime: "Active 5 hours ago",
-    lastDonation: "4 months ago",
-  },
-  // page 2
-  {
-    id: "7",
-    initials: "KA",
-    name: "Kamal Ahmed",
-    verified: false,
-    location: "Gulshan",
-    bloodGroup: "B+",
-    available: true,
-    activeTime: "Active 1 hour ago",
-    lastDonation: "2 months ago",
-  },
-  {
-    id: "8",
-    initials: "SB",
-    name: "Sultana Begum",
-    verified: true,
-    location: "Farmgate",
-    bloodGroup: "AB-",
-    available: false,
-    activeTime: "Active 2 days ago",
-    lastDonation: "7 months ago",
-  },
-  {
-    id: "9",
-    initials: "RI",
-    name: "Rafiq Islam",
-    verified: true,
-    location: "Motijheel",
-    bloodGroup: "O+",
-    available: true,
-    activeTime: "Active 30 minutes ago",
-    lastDonation: "1 month ago",
-  },
-  {
-    id: "10",
-    initials: "TK",
-    name: "Tahmina Khanam",
-    verified: false,
-    location: "Dhanmondi",
-    bloodGroup: "A+",
-    available: true,
-    activeTime: "Active Today",
-    lastDonation: "3 months ago",
-  },
-  {
-    id: "11",
-    initials: "MH",
-    name: "Murad Hossain",
-    verified: true,
-    location: "Mirpur",
-    bloodGroup: "B+",
-    available: false,
-    activeTime: "Active 3 days ago",
-    lastDonation: "5 months ago",
-  },
-  {
-    id: "12",
-    initials: "NB",
-    name: "Nasrin Begum",
-    verified: true,
-    location: "Uttara",
-    bloodGroup: "O-",
-    available: true,
-    activeTime: "Active 4 hours ago",
-    lastDonation: "2 months ago",
-  },
-  // page 3
-  {
-    id: "13",
-    initials: "AR",
-    name: "Arif Rahman",
-    verified: true,
-    location: "Banani",
-    bloodGroup: "A-",
-    available: true,
-    activeTime: "Active 6 hours ago",
-    lastDonation: "4 months ago",
-  },
-  {
-    id: "14",
-    initials: "SC",
-    name: "Sabrina Chowdhury",
-    verified: false,
-    location: "Gulshan",
-    bloodGroup: "AB+",
-    available: false,
-    activeTime: "Active Yesterday",
-    lastDonation: "6 months ago",
-  },
-  {
-    id: "15",
-    initials: "JA",
-    name: "Jahangir Alam",
-    verified: true,
-    location: "Mohammadpur",
-    bloodGroup: "B-",
-    available: true,
-    activeTime: "Active 2 hours ago",
-    lastDonation: "3 months ago",
-  },
-  {
-    id: "16",
-    initials: "RK",
-    name: "Reshma Khatun",
-    verified: true,
-    location: "Bashundhara",
-    bloodGroup: "O+",
-    available: true,
-    activeTime: "Active 1 hour ago",
-    lastDonation: "5 months ago",
-  },
-  {
-    id: "17",
-    initials: "FK",
-    name: "Farhan Khan",
-    verified: false,
-    location: "Farmgate",
-    bloodGroup: "A+",
-    available: true,
-    activeTime: "Active Today",
-    lastDonation: "2 months ago",
-  },
-  {
-    id: "18",
-    initials: "DI",
-    name: "Dilruba Islam",
-    verified: true,
-    location: "Motijheel",
-    bloodGroup: "AB-",
-    available: false,
-    activeTime: "Active 4 days ago",
-    lastDonation: "8 months ago",
-  },
-];
 
 const PER_PAGE = 6;
-const TOTAL_PAGES = Math.ceil(ALL_DONORS.length / PER_PAGE);
 
 // ── Page ──────────────────────────────────────────────────────────────────
 
 const Find_A_Donor = () => {
+  const [donors, setDonors] = useState<Donor[]>([]);
+  const [filters, setFilters] = useState<DonorSearchFilters>({
+    bloodGroup: "",
+    area: "",
+    availability: "all",
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
 
-  const pageDonors = ALL_DONORS.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-  const startIndex = (page - 1) * PER_PAGE + 1;
-  const endIndex   = Math.min(page * PER_PAGE, ALL_DONORS.length);
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/donors", { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json() as { donors?: Donor[]; error?: string };
+        if (!response.ok) throw new Error(result.error || "Unable to load donors.");
+        if (active) setDonors(result.donors ?? []);
+      })
+      .catch(() => {
+        if (active) toast.error("Unable to load donors. Please try again.");
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+
+    return () => { active = false; };
+  }, []);
+
+  const filteredDonors = useMemo(() => donors.filter((donor) => {
+    if (filters.bloodGroup && donor.bloodGroup !== filters.bloodGroup) return false;
+    if (filters.area && donor.location.toLowerCase() !== filters.area.toLowerCase()) return false;
+    if (filters.availability === "now" && !donor.available) return false;
+    if (filters.availability === "recent") {
+      const recent = donor.activeTime === "Updated today" ||
+        /^Updated [1-7] days ago$/.test(donor.activeTime);
+      if (!recent) return false;
+    }
+    return true;
+  }), [donors, filters]);
+
+  const totalPages = Math.ceil(filteredDonors.length / PER_PAGE);
+  const pageDonors = filteredDonors.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const goTo = (p: number) => {
     setPage(p);
@@ -255,7 +87,10 @@ const Find_A_Donor = () => {
 
           {/* Search Card */}
           <div className="mt-10">
-            <DonorSearch />
+            <DonorSearch onSearch={(nextFilters) => {
+              setFilters(nextFilters);
+              setPage(1);
+            }} />
           </div>
 
         </div>
@@ -274,17 +109,17 @@ const Find_A_Donor = () => {
           <div className="mb-6 flex items-end justify-between">
             <div>
               <p className="text-[14px] font-bold uppercase tracking-[0.14em] text-[#E2484D]">
-                {ALL_DONORS.length} donors found
+                {filteredDonors.length} donors found
               </p>
               <h2 className="mt-0.5 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-[#1B1615] sm:text-[28px]">
-                Recently active donors in Dhaka
+                Donors matching your search
               </h2>
             </div>
 
             {/* Sort label */}
             <span className="hidden items-center gap-2 text-[13px] text-[#9E8E85] sm:flex">
               <AlignJustify size={14} strokeWidth={2} />
-              Sorted by recently active
+              Sorted by recently updated
             </span>
           </div>
 
@@ -294,10 +129,25 @@ const Find_A_Donor = () => {
               <DonorCard key={donor.id} donor={donor} />
             ))}
           </div>
+          {isLoading && (
+            <p className="mt-8 text-center text-[14px] text-[#9E8E85]">
+              Loading donors…
+            </p>
+          )}
+          {!isLoading && donors.length === 0 && (
+            <p className="mt-8 text-center text-[14px] text-[#9E8E85]">
+              No donor profiles are registered yet.
+            </p>
+          )}
+          {!isLoading && donors.length > 0 && filteredDonors.length === 0 && (
+            <p className="mt-8 text-center text-[14px] text-[#9E8E85]">
+              No donors match your search.
+            </p>
+          )}
 
           {/* ── Pagination ── */}
           <div className="mt-12 flex items-center justify-center gap-2">
-            {Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1).map((p) => (
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
                 onClick={() => goTo(p)}

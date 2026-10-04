@@ -23,6 +23,12 @@ type SearchErrors = {
   area?: string;
 };
 
+export type DonorSearchFilters = {
+  bloodGroup: string;
+  area: string;
+  availability: string;
+};
+
 // ── CustomSelect ──────────────────────────────────────────────────────────
 
 interface SelectOption {
@@ -158,7 +164,7 @@ function CustomSelect({
 
 // ── HomeSearch ────────────────────────────────────────────────────────────
 
-export function DonorSearch() {
+export function DonorSearch({ onSearch }: { onSearch: (filters: DonorSearchFilters) => void }) {
   const [bloodGroup,    setBloodGroup]    = useState("");
   const [area,          setArea]          = useState("");
   const [availability,  setAvailability]  = useState("all"); // default: All donors
@@ -180,13 +186,8 @@ export function DonorSearch() {
     if (Object.keys(newErrors).length > 0) return;
 
     setIsSearching(true);
-    try {
-      await new Promise((r) => setTimeout(r, 1800));
-      console.log({ bloodGroup, area, availability });
-      // router.push(`/Find_A_Doner?bloodGroup=${bloodGroup}&area=${area}&availability=${availability}`);
-    } finally {
-      setIsSearching(false);
-    }
+    onSearch({ bloodGroup, area, availability });
+    setIsSearching(false);
   };
 
   // ── Blood group options ───────────────────────────────────────────────
