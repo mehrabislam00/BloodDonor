@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AlignJustify } from "lucide-react";
+import { AlignJustify, Droplets } from "lucide-react";
 import DonorCard, { type Donor } from "@/components/donor/DonorCard";
 import { DonorSearch, type DonorSearchFilters } from "@/components/find-donor/DonorSearch";
 import { toast } from "@/lib/toast";
@@ -130,7 +130,7 @@ const FindDonorClient = ({
             {/* Sort label */}
             <span className="hidden items-center gap-2 text-[13px] text-[#9E8E85] sm:flex">
               <AlignJustify size={14} strokeWidth={2} />
-              Sorted by recently active
+              <span className="text-[14px] font-medium text-[#80736C]">Recently active first</span>
             </span>
           </div>
 
@@ -145,20 +145,23 @@ const FindDonorClient = ({
               Loading donors…
             </p>
           )}
-          {!isLoading && donors.length === 0 && !filters.bloodGroup && !filters.area && (
-            <p className="mt-8 text-center text-[14px] text-[#9E8E85]">
-              No donor profiles are registered yet.
-            </p>
-          )}
-          {!isLoading && donors.length === 0 && (filters.bloodGroup || filters.area) && (
-            <p className="mt-8 text-center text-[14px] text-[#9E8E85]">
-              No donors match your search.
-            </p>
-          )}
-          {!isLoading && donors.length > 0 && filteredDonors.length === 0 && (
-            <p className="mt-8 text-center text-[14px] text-[#9E8E85]">
-              No donors match your search.
-            </p>
+          {!isLoading && filteredDonors.length === 0 && (
+            <div className="mx-auto mt-8 flex max-w-xl items-start gap-3 rounded-2xl border border-[#EDE7E2] bg-white/70 px-5 py-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFE9E9] text-[#E2484D]">
+                <Droplets size={16} strokeWidth={2} />
+              </span>
+              <div>
+                <h3 className="text-[14px] font-semibold text-[#403A37]">
+                  No donors found
+                </h3>
+                <p className="mt-1 text-[13px] leading-relaxed text-[#9E8E85]">
+                  We couldn&apos;t find any donors matching your current filters.
+                </p>
+                <p className="mt-0.5 text-[12px] leading-relaxed text-[#B5A89F]">
+                  Try adjusting your blood group, area, activity, or availability filters.
+                </p>
+              </div>
+            </div>
           )}
 
           {/* ── Pagination ── */}

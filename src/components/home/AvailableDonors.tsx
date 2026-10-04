@@ -2,6 +2,7 @@
 
 import React, { useMemo } from "react";
 import Link from "next/link";
+import { Droplets } from "lucide-react";
 import DonorCard, { type Donor } from "@/components/donor/DonorCard";
 
 type AvailableDonorsProps = {
@@ -70,11 +71,26 @@ const AvailableDonors = ({ donors, selectedBloodGroup }: AvailableDonorsProps) =
           ))}
         </div>
         {matchingDonors.length === 0 && (
-          <p className="mt-8 text-center text-[14px] text-[#9E8E85]">
-            {selectedBloodGroup
-              ? `No ${selectedBloodGroup} donors are currently available.`
-              : "No donor profiles are registered yet."}
-          </p>
+          <div className="mx-auto mt-8 flex max-w-xl items-start gap-3 rounded-2xl border border-[#EDE7E2] bg-white/70 px-5 py-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFE9E9] text-[#E2484D]">
+              <Droplets size={16} strokeWidth={2} />
+            </span>
+            <div>
+              <h3 className="text-[14px] font-semibold text-[#403A37]">
+                {selectedBloodGroup ? "No matching donors yet" : "No donors found"}
+              </h3>
+              <p className="mt-1 text-[13px] leading-relaxed text-[#9E8E85]">
+                {selectedBloodGroup
+                  ? `We couldn't find any ${selectedBloodGroup} donors available right now.`
+                  : "There are no donor profiles to show right now."}
+              </p>
+              <p className="mt-0.5 text-[12px] leading-relaxed text-[#B5A89F]">
+                {selectedBloodGroup
+                  ? "Try another blood group or check again later."
+                  : "Check back later as our donor community grows."}
+              </p>
+            </div>
+          </div>
         )}
 
       </div>
