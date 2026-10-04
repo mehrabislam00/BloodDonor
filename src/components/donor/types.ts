@@ -8,7 +8,6 @@ export interface Donor {
   available: boolean;
   availability: string;
   availableFrom?: string | null;
-  activeTime: string;
   lastActiveAt: number | null;
   lastDonationDate: string | null;
 }

@@ -17,7 +17,7 @@ import type { Donor }               from "./types";
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function relativeTime(ts: number | null): string | null {
-  if (!ts) return null;
+  if (ts === null || !Number.isFinite(ts)) return null;
   const diff   = Date.now() - ts;
   const mins   = Math.floor(diff / 60_000);
   const hours  = Math.floor(diff / 3_600_000);
@@ -35,7 +35,7 @@ function relativeTime(ts: number | null): string | null {
 }
 
 function formatDateTime(ts: number | null): string | null {
-  if (!ts) return null;
+  if (ts === null || !Number.isFinite(ts)) return null;
   return new Date(ts).toLocaleString("en-US", {
     weekday: "short", month: "long", day: "numeric",
     year: "numeric", hour: "numeric", minute: "2-digit", hour12: true,
@@ -114,7 +114,7 @@ export function DonorProfileModal({ donor, onClose, getWhatsAppUrl }: Props) {
 
   // Formatted values
   const lastActiveFull   = formatDateTime(donor.lastActiveAt);
-  const lastActiveRel    = relativeTime(donor.lastActiveAt) ?? donor.activeTime ?? null;
+  const lastActiveRel    = relativeTime(donor.lastActiveAt);
   const lastDonationFull = formatDonationDate(donor.lastDonationDate);
   const lastDonationRel  = getDonationDateRelativeTime(donor.lastDonationDate);
 
@@ -122,7 +122,7 @@ export function DonorProfileModal({ donor, onClose, getWhatsAppUrl }: Props) {
     ? `${lastDonationFull}${lastDonationRel ? ` · ${lastDonationRel}` : ""}`
     : "Not provided";
 
-  const lastActivePrimary = lastActiveFull ?? lastActiveRel ?? "—";
+  const lastActivePrimary = lastActiveFull ?? lastActiveRel ?? "No activity recorded";
   const lastActiveSec     = lastActiveFull && lastActiveRel ? lastActiveRel : undefined;
 
   return (

@@ -22,7 +22,7 @@ export type { Donor } from "./types";
 // ── Helpers (unchanged from previous version) ─────────────────────────────
 
 function relativeTime(ts: number | null): string | null {
-  if (!ts) return null;
+  if (ts === null || !Number.isFinite(ts)) return null;
   const diff   = Date.now() - ts;
   const mins   = Math.floor(diff / 60_000);
   const hours  = Math.floor(diff / 3_600_000);
@@ -64,7 +64,7 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
   const activeLabel = (() => {
     const computed = relativeTime(donor.lastActiveAt);
     if (computed) return `Active ${computed}`;
-    return donor.activeTime || null;
+    return null;
   })();
 
   const lastDonationLabel = getDonationDateRelativeTime(donor.lastDonationDate);

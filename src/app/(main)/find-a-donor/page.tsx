@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AlignJustify } from "lucide-react";
 import DonorCard, { type Donor } from "@/components/donor/DonorCard";
 import { DonorSearch, type DonorSearchFilters } from "@/components/find-donor/DonorSearch";
 import { toast } from "@/lib/toast";
-import { getAvailabilityState } from "@/lib/availability";
 
 
 const PER_PAGE = 6;
@@ -17,69 +16,42 @@ const Find_A_Donor = () => {
   const [filters, setFilters] = useState<DonorSearchFilters>({
     bloodGroup: "",
     area: "",
-    availability: "all",
+    activity: "all",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [availabilityTime, setAvailabilityTime] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      bloodGroup: filters.bloodGroup,
+      area: filters.area,
+      activity: filters.activity,
+    });
 
-    fetch("/api/donors", { cache: "no-store" })
+    fetch(`/api/donors?${params.toString()}`, { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const result = await response.json() as { donors?: Donor[]; error?: string };
         if (!response.ok) throw new Error(result.error || "Unable to load donors.");
         if (active) setDonors(result.donors ?? []);
       })
-      .catch(() => {
-        if (active) toast.error("Unable to load donors. Please try again.");
+      .catch((error: unknown) => {
+        if (active && !(error instanceof DOMException && error.name === "AbortError")) {
+          toast.error("Unable to load donors. Please try again.");
+        }
       })
       .finally(() => {
         if (active) setIsLoading(false);
       });
 
-    return () => { active = false; };
-  }, []);
-
-  useEffect(() => {
-    let timer: number;
-    const refreshAvailability = () => {
-      const now = Date.now();
-      setAvailabilityTime(now);
-      const nextAvailableAt = donors
-        .filter((donor) => !donor.available && donor.availableFrom)
-        .map((donor) => Date.parse(`${donor.availableFrom}T00:00:00.000Z`))
-        .filter((date) => Number.isFinite(date) && date > now)
-        .sort((a, b) => a - b)[0];
-      if (!nextAvailableAt) return;
-
-      const today = new Date(now);
-      const nextDay = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1);
-      timer = window.setTimeout(
-        refreshAvailability,
-        Math.min(nextAvailableAt - now + 1, nextDay - now),
-      );
+    return () => {
+      active = false;
+      controller.abort();
     };
+  }, [filters]);
 
-    timer = window.setTimeout(refreshAvailability, 0);
-    return () => window.clearTimeout(timer);
-  }, [donors]);
-
-  const filteredDonors = useMemo(() => donors.filter((donor) => {
-    if (filters.bloodGroup && donor.bloodGroup !== filters.bloodGroup) return false;
-    if (filters.area && donor.location.toLowerCase() !== filters.area.toLowerCase()) return false;
-    const isAvailable = availabilityTime === null
-      ? donor.available
-      : getAvailabilityState(donor.availability, donor.availableFrom, new Date(availabilityTime)).available;
-    if (filters.availability === "now" && !isAvailable) return false;
-    if (filters.availability === "recent") {
-      const recent = donor.activeTime === "Updated today" ||
-        /^Updated [1-7] days ago$/.test(donor.activeTime);
-      if (!recent) return false;
-    }
-    return true;
-  }), [availabilityTime, donors, filters]);
+  const filteredDonors = donors;
 
   const totalPages = Math.ceil(filteredDonors.length / PER_PAGE);
   const pageDonors = filteredDonors.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -117,6 +89,8 @@ const Find_A_Donor = () => {
           {/* Search Card */}
           <div className="mt-10">
             <DonorSearch onSearch={(nextFilters) => {
+              setDonors([]);
+              setIsLoading(true);
               setFilters(nextFilters);
               setPage(1);
             }} />
@@ -148,7 +122,7 @@ const Find_A_Donor = () => {
             {/* Sort label */}
             <span className="hidden items-center gap-2 text-[13px] text-[#9E8E85] sm:flex">
               <AlignJustify size={14} strokeWidth={2} />
-              Sorted by recently updated
+              Sorted by recently active
             </span>
           </div>
 

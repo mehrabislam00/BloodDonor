@@ -1,21 +1,35 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Search, Loader2, MapPin, Droplets, ChevronDown, Check, Clock } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  MapPin,
+  Droplets,
+  ChevronDown,
+  Check,
+  Clock,
+} from "lucide-react";
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const AREAS = [
-  "Dhanmondi", "Mirpur", "Uttara", "Gulshan",
-  "Mohammadpur", "Banani", "Motijheel", "Farmgate",
+  "Dhanmondi",
+  "Mirpur",
+  "Uttara",
+  "Gulshan",
+  "Mohammadpur",
+  "Banani",
+  "Motijheel",
+  "Farmgate",
 ];
 
-const AVAILABILITY_OPTIONS = [
-  { value: "all",    label: "All donors",      dot: ""            },
-  { value: "now",    label: "Available now",   dot: "bg-[#1A9E56]"},
-  { value: "recent", label: "Recently active", dot: "bg-[#F59E0B]"},
+const ACTIVITY_OPTIONS = [
+  { value: "all", label: "All Donors", dot: "" },
+  { value: "now", label: "Active Now", dot: "bg-[#1A9E56]" },
+  { value: "recent", label: "Recently Active", dot: "bg-[#F59E0B]" },
 ];
 
 type SearchErrors = {
@@ -26,7 +40,7 @@ type SearchErrors = {
 export type DonorSearchFilters = {
   bloodGroup: string;
   area: string;
-  availability: string;
+  activity: string;
 };
 
 // ── CustomSelect ──────────────────────────────────────────────────────────
@@ -44,14 +58,19 @@ interface SelectProps {
   placeholder: string;
   hasError?: boolean;
   renderOption: (o: SelectOption) => React.ReactNode;
-  renderValue:  (o: SelectOption) => React.ReactNode;
+  renderValue: (o: SelectOption) => React.ReactNode;
 }
 
 function CustomSelect({
-  value, onChange, options, placeholder,
-  hasError, renderOption, renderValue,
+  value,
+  onChange,
+  options,
+  placeholder,
+  hasError,
+  renderOption,
+  renderValue,
 }: SelectProps) {
-  const [isOpen,  setIsOpen]  = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -69,12 +88,14 @@ function CustomSelect({
     const onOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) close();
     };
-    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
     document.addEventListener("mousedown", onOutside);
-    document.addEventListener("keydown",   onEsc);
+    document.addEventListener("keydown", onEsc);
     return () => {
       document.removeEventListener("mousedown", onOutside);
-      document.removeEventListener("keydown",   onEsc);
+      document.removeEventListener("keydown", onEsc);
     };
   });
 
@@ -82,7 +103,6 @@ function CustomSelect({
 
   return (
     <div ref={ref} className="relative w-full">
-
       {/* ── Trigger ── */}
       <button
         type="button"
@@ -103,7 +123,8 @@ function CustomSelect({
           {selected ? renderValue(selected) : placeholder}
         </span>
         <ChevronDown
-          size={16} strokeWidth={2}
+          size={16}
+          strokeWidth={2}
           className={[
             "shrink-0 transition-all duration-300",
             isOpen
@@ -126,19 +147,24 @@ function CustomSelect({
               : "opacity-0 scale-y-95 -translate-y-1",
           ].join(" ")}
         >
-          <div className="max-h-[240px] overflow-y-auto py-1.5
+          <div
+            className="max-h-[240px] overflow-y-auto py-1.5
             [&::-webkit-scrollbar]:w-[4px]
             [&::-webkit-scrollbar-track]:bg-transparent
             [&::-webkit-scrollbar-thumb]:rounded-full
             [&::-webkit-scrollbar-thumb]:bg-[#E7E0DB]
-          ">
+          "
+          >
             {options.map((option) => {
               const isSelected = value === option.value;
               return (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => { onChange(option.value); close(); }}
+                  onClick={() => {
+                    onChange(option.value);
+                    close();
+                  }}
                   className={[
                     "w-full flex items-center justify-between gap-3",
                     "px-4 py-[10px] text-[13px] text-left",
@@ -150,7 +176,11 @@ function CustomSelect({
                 >
                   <span className="flex-1">{renderOption(option)}</span>
                   {isSelected && (
-                    <Check size={14} strokeWidth={2.5} className="shrink-0 text-[#E2484D]" />
+                    <Check
+                      size={14}
+                      strokeWidth={2.5}
+                      className="shrink-0 text-[#E2484D]"
+                    />
                   )}
                 </button>
               );
@@ -164,12 +194,16 @@ function CustomSelect({
 
 // ── HomeSearch ────────────────────────────────────────────────────────────
 
-export function DonorSearch({ onSearch }: { onSearch: (filters: DonorSearchFilters) => void }) {
-  const [bloodGroup,    setBloodGroup]    = useState("");
-  const [area,          setArea]          = useState("");
-  const [availability,  setAvailability]  = useState("all"); // default: All donors
-  const [errors,        setErrors]        = useState<SearchErrors>({});
-  const [isSearching,   setIsSearching]   = useState(false);
+export function DonorSearch({
+  onSearch,
+}: {
+  onSearch: (filters: DonorSearchFilters) => void;
+}) {
+  const [bloodGroup, setBloodGroup] = useState("");
+  const [area, setArea] = useState("");
+  const [activity, setActivity] = useState("all"); // default: All Donors
+  const [errors, setErrors] = useState<SearchErrors>({});
+  const [isSearching, setIsSearching] = useState(false);
 
   const clearError = (key: keyof SearchErrors) =>
     setErrors((e) => ({ ...e, [key]: undefined }));
@@ -180,31 +214,32 @@ export function DonorSearch({ onSearch }: { onSearch: (filters: DonorSearchFilte
 
     const newErrors: SearchErrors = {};
     if (!bloodGroup) newErrors.bloodGroup = "Please select a blood group.";
-    if (!area)       newErrors.area       = "Please select an area.";
+    if (!area) newErrors.area = "Please select an area.";
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
     setIsSearching(true);
-    onSearch({ bloodGroup, area, availability });
+    onSearch({ bloodGroup, area, activity });
     setIsSearching(false);
   };
 
   // ── Blood group options ───────────────────────────────────────────────
 
   const bloodGroupOptions = BLOOD_GROUPS.map((g) => ({ value: g, label: g }));
-  const areaOptions       = AREAS.map((a)          => ({ value: a, label: a }));
+  const areaOptions = AREAS.map((a) => ({ value: a, label: a }));
 
   return (
     <div className="w-full px-4 sm:px-6">
-      <div className="
+      <div
+        className="
         mx-auto w-full rounded-[18px]
         border border-[#E7E0DB] bg-white
         px-6 py-5 sm:px-8 sm:py-6
         shadow-[0_10px_30px_rgba(27,22,21,0.06)]
-      ">
+      "
+      >
         <form onSubmit={onSubmit} className="w-full">
-
           {/* ── Header ── */}
           <div className="mb-6 flex items-center gap-2.5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#FFE9E9] text-[#E2484D]">
@@ -216,12 +251,13 @@ export function DonorSearch({ onSearch }: { onSearch: (filters: DonorSearchFilte
           </div>
 
           {/* ── Fields: 4-col on lg ── */}
-          <div className="
+          <div
+            className="
             grid w-full grid-cols-1 gap-4
             lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_172px]
             lg:items-start
-          ">
-
+          "
+          >
             {/* ── Blood Group ── */}
             <div className="min-w-0">
               <p className="mb-2 text-[13px] font-semibold text-[#403A37]">
@@ -229,7 +265,10 @@ export function DonorSearch({ onSearch }: { onSearch: (filters: DonorSearchFilte
               </p>
               <CustomSelect
                 value={bloodGroup}
-                onChange={(v) => { setBloodGroup(v); clearError("bloodGroup"); }}
+                onChange={(v) => {
+                  setBloodGroup(v);
+                  clearError("bloodGroup");
+                }}
                 options={bloodGroupOptions}
                 placeholder="Select group"
                 hasError={!!errors.bloodGroup}
@@ -252,7 +291,9 @@ export function DonorSearch({ onSearch }: { onSearch: (filters: DonorSearchFilte
               />
               <div className="h-5 pt-1">
                 {errors.bloodGroup && (
-                  <p className="text-[11px] font-medium text-[#E2484D]">⚠ {errors.bloodGroup}</p>
+                  <p className="text-[11px] font-medium text-[#E2484D]">
+                    ⚠ {errors.bloodGroup}
+                  </p>
                 )}
               </div>
             </div>
@@ -264,7 +305,10 @@ export function DonorSearch({ onSearch }: { onSearch: (filters: DonorSearchFilte
               </p>
               <CustomSelect
                 value={area}
-                onChange={(v) => { setArea(v); clearError("area"); }}
+                onChange={(v) => {
+                  setArea(v);
+                  clearError("area");
+                }}
                 options={areaOptions}
                 placeholder="Select area"
                 hasError={!!errors.area}
@@ -278,45 +322,59 @@ export function DonorSearch({ onSearch }: { onSearch: (filters: DonorSearchFilte
                 )}
                 renderValue={({ label }) => (
                   <span className="flex items-center gap-2">
-                    <MapPin size={13} strokeWidth={2} className="shrink-0 text-[#9E8E85]" />
+                    <MapPin
+                      size={13}
+                      strokeWidth={2}
+                      className="shrink-0 text-[#9E8E85]"
+                    />
                     {label}
                   </span>
                 )}
               />
               <div className="h-5 pt-1">
                 {errors.area && (
-                  <p className="text-[11px] font-medium text-[#E2484D]">⚠ {errors.area}</p>
+                  <p className="text-[11px] font-medium text-[#E2484D]">
+                    ⚠ {errors.area}
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* ── Availability ── */}
+            {/* ── Activity ── */}
             <div className="min-w-0">
               <p className="mb-2 text-[13px] font-semibold text-[#403A37]">
-                Availability
+                Activity
               </p>
               <CustomSelect
-                value={availability}
-                onChange={setAvailability}
-                options={AVAILABILITY_OPTIONS}
-                placeholder="All donors"
+                value={activity}
+                onChange={setActivity}
+                options={ACTIVITY_OPTIONS}
+                placeholder="All Donors"
                 renderOption={({ label, dot }) => (
                   <span className="flex items-center gap-3">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#F0EDEA] text-[#9E8E85]">
-                      {dot
-                        ? <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
-                        : <Clock size={12} strokeWidth={2} />
-                      }
+                      {dot ? (
+                        <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
+                      ) : (
+                        <Clock size={12} strokeWidth={2} />
+                      )}
                     </span>
                     <span className="font-medium">{label}</span>
                   </span>
                 )}
                 renderValue={({ label, dot }) => (
                   <span className="flex items-center gap-2">
-                    {dot
-                      ? <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
-                      : <Clock size={13} strokeWidth={2} className="shrink-0 text-[#9E8E85]" />
-                    }
+                    {dot ? (
+                      <span
+                        className={`h-2 w-2 shrink-0 rounded-full ${dot}`}
+                      />
+                    ) : (
+                      <Clock
+                        size={13}
+                        strokeWidth={2}
+                        className="shrink-0 text-[#9E8E85]"
+                      />
+                    )}
                     {label}
                   </span>
                 )}
@@ -343,13 +401,18 @@ export function DonorSearch({ onSearch }: { onSearch: (filters: DonorSearchFilte
                 "
               >
                 {isSearching ? (
-                  <><Loader2 size={16} className="animate-spin" /><span>Searching…</span></>
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Searching…</span>
+                  </>
                 ) : (
-                  <><Search size={16} strokeWidth={2.3} /><span>Search Donors</span></>
+                  <>
+                    <Search size={16} strokeWidth={2.3} />
+                    <span>Search Donors</span>
+                  </>
                 )}
               </button>
             </div>
-
           </div>
         </form>
       </div>

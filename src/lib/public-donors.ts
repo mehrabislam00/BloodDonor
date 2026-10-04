@@ -1,6 +1,7 @@
 import { database } from "@/lib/mongodb";
 import { getAvailabilityState } from "@/lib/availability";
 import { normalizeDonationDate } from "@/lib/donation-date";
+import { filterAndSortDonors, type DonorSearchFilters } from "@/lib/donor-search";
 
 export type PublicDonorCard = {
   id: string;
@@ -12,7 +13,6 @@ export type PublicDonorCard = {
   available: boolean;
   availability: string;
   availableFrom: string | null;
-  activeTime: string;
   lastActiveAt: number | null;
   lastDonationDate: string | null;
 };
@@ -25,13 +25,13 @@ type DonorProfileRecord = {
   availability?: string;
   availableFrom?: string | null;
   lastDonationDate?: string;
+  lastActiveAt?: Date | string | number;
   updatedAt?: Date | string;
 };
 
 type DonorRegistryRecord = {
   userId: string;
   lastDonationDate?: string;
-  updatedAt?: Date | string;
 };
 
 function getInitials(name: string) {
@@ -43,20 +43,12 @@ function getInitials(name: string) {
     .join("");
 }
 
-function formatElapsed(date: Date | null) {
-  if (!date || Number.isNaN(date.getTime())) {
-    return "Recently updated";
-  }
-
-  const elapsedDays = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86_400_000));
-  if (elapsedDays < 1) return "Updated today";
-  if (elapsedDays < 7) return `Updated ${elapsedDays} ${elapsedDays === 1 ? "day" : "days"} ago`;
-  const weeks = Math.floor(elapsedDays / 7);
-  return `Updated ${weeks} ${weeks === 1 ? "week" : "weeks"} ago`;
-}
-
-function parseDate(value: Date | string | undefined): Date | null {
+function parseDate(value: Date | string | number | undefined): Date | null {
   if (value instanceof Date) return value;
+  if (typeof value === "number") {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
   if (typeof value === "string" && value) {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
@@ -64,7 +56,9 @@ function parseDate(value: Date | string | undefined): Date | null {
   return null;
 }
 
-export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
+export async function getPublicDonorCards(
+  filters: DonorSearchFilters = { bloodGroup: "", area: "", activity: "all" },
+): Promise<PublicDonorCard[]> {
   const [registeredProfiles, donorRegistry] = await Promise.all([
     database
       .collection<DonorProfileRecord>("userProfiles")
@@ -78,6 +72,7 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
             availability: 1,
             availableFrom: 1,
             lastDonationDate: 1,
+            lastActiveAt: 1,
             updatedAt: 1,
           },
         },
@@ -85,7 +80,7 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
       .toArray(),
     database
       .collection<DonorRegistryRecord>("donorProfiles")
-      .find({}, { projection: { userId: 1, lastDonationDate: 1, updatedAt: 1 } })
+      .find({}, { projection: { userId: 1, lastDonationDate: 1 } })
       .toArray(),
   ]);
 
@@ -111,6 +106,7 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
             availability: 1,
             availableFrom: 1,
             lastDonationDate: 1,
+            lastActiveAt: 1,
             updatedAt: 1,
           },
         },
@@ -129,7 +125,7 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
   const donorsById = new Map(donorRegistry.map((donor) => [donor.userId, donor]));
   const namesById = new Map(users.map((user) => [user.id, user.name?.trim() || "Donor"]));
 
-  return userIds
+  const donors = userIds
     .map((userId) => {
       const profile = profilesById.get(userId);
       const registeredDonor = donorsById.get(userId);
@@ -140,7 +136,7 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
         new Date(),
         profile?.updatedAt,
       );
-      const lastActiveDate = parseDate(profile?.updatedAt ?? registeredDonor?.updatedAt);
+      const lastActiveDate = parseDate(profile?.lastActiveAt);
       const savedDonationDate = typeof profile?.lastDonationDate === "string"
         && profile.lastDonationDate !== ""
         ? profile.lastDonationDate
@@ -156,10 +152,10 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
         available: availabilityState.available,
         availability: availabilityState.available ? "Available Now" : availabilityState.label,
         availableFrom: availabilityState.availableFrom,
-        activeTime: formatElapsed(lastActiveDate),
         lastActiveAt: lastActiveDate?.getTime() ?? null,
         lastDonationDate,
       };
-    })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    });
+
+  return filterAndSortDonors(donors, filters);
 }
