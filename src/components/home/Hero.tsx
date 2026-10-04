@@ -3,9 +3,13 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@heroui/react";
 import { HomeSearch } from "./HomeSearch";
 import { BloodDonorCards } from "./BloodDonorCards";
+import person1 from "@/assets/person1.avif";
+import person2 from "@/assets/person2.jpg";
+import person3 from "@/assets/person3.jpg";
 
 // ── Hero ──────────────────────────────────────────────────────────────────
 const Hero = () => {
@@ -85,9 +89,27 @@ const Hero = () => {
             {/* Community avatars */}
             <div className="mt-10 flex items-center gap-3">
               <div className="flex -space-x-2">
-                <div className="h-9 w-9 rounded-full border-2 border-[#FDF9F6] bg-[#FFD6D8]" />
-                <div className="h-9 w-9 rounded-full border-2 border-[#FDF9F6] bg-[#F5B8BB]" />
-                <div className="h-9 w-9 rounded-full border-2 border-[#FDF9F6] bg-[#E9878B]" />
+                <Image
+                  src={person1}
+                  alt="Donor"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 rounded-full border-2 border-[#F3A5A8] object-cover object-[50%_40%]"
+                />
+                <Image
+                  src={person2}
+                  alt="Donor"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 rounded-full border-2 border-[#F3A5A8] object-cover object-[50%_35%]"
+                />
+                <Image
+                  src={person3}
+                  alt="Donor"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 rounded-full border-2 border-[#F3A5A8] object-cover object-[50%_35%]"
+                />
               </div>
               <p className="text-md text-[#68625E]">
                 Local donors ready to help when it matters most
