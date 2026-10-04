@@ -12,6 +12,7 @@ import { useProfileData } from "@/components/profile/ProfileDataProvider";
 interface Props {
   donorId:     string;
   donorName?:  string;
+  disabled?:   boolean;
 }
 
 // ── Mobile detection — runs only client-side ──────────────────────────────────
@@ -38,7 +39,7 @@ function useMobile() {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function CallButton({ donorId, donorName }: Props) {
+export function CallButton({ donorId, donorName, disabled = false }: Props) {
   const isMobile            = useMobile();
   const { userId } = useProfileData();
   const [revealed, setRevealed] = useState(false);
@@ -63,7 +64,7 @@ export function CallButton({ donorId, donorName }: Props) {
 
   const handleCopy = useCallback(async (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!display) return;
+    if (disabled || !display) return;
     if (!(await requireAuthentication("Please log in to contact a donor."))) {
       setRevealed(false);
       setContact(null);
@@ -77,9 +78,10 @@ export function CallButton({ donorId, donorName }: Props) {
     } catch {
       toast.error("Could not copy. Please copy manually.");
     }
-  }, [display]);
+  }, [disabled, display]);
 
   const requestContact = async () => {
+    if (disabled) return;
     if (!(await requireAuthentication("Please log in to contact a donor."))) return;
     try {
       const response = await fetch(`/api/donor/contact?donorId=${encodeURIComponent(donorId)}`, {
@@ -90,6 +92,8 @@ export function CallButton({ donorId, donorName }: Props) {
           toast.warning("Please log in to contact a donor.");
         } else if (response.status === 404) {
           toast.warning("Phone number is not available.");
+        } else if (response.status === 403) {
+          toast.warning("This donor is not currently available for contact.");
         } else {
           toast.error("Could not contact this donor. Please try again.");
         }
@@ -141,17 +145,22 @@ export function CallButton({ donorId, donorName }: Props) {
       <button
         type="button"
         onClick={() => (revealed ? void handleCopy() : void requestContact())}
-        className={`${base} ${revealed ? active : idle}`}
+        disabled={disabled}
+        className={`${base} ${revealed ? active : idle} disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-[#E7E0DB] disabled:hover:bg-white disabled:hover:text-[#1B1615] disabled:hover:shadow-none`}
         aria-label={
           revealed
             ? `Copy number ${display}`
-            : `Call ${donorName ?? "donor"}`
+            : disabled
+              ? `${donorName ?? "Donor"} is unavailable`
+              : `Call ${donorName ?? "donor"}`
         }
         aria-expanded={revealed}
         title={
           revealed
             ? `Click to copy • ${display}`
-            : "Contact this donor"
+            : disabled
+              ? "This donor is not currently available for contact"
+              : "Contact this donor"
         }
       >
         {/* ── Layer 1: "Call" — slides up & fades out ── */}

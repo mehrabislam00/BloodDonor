@@ -193,12 +193,17 @@ const DonorCard = ({ name, blood, area, status, avatar }: DonorCardProps) => (
       )}
 
       <button
+        type="button"
+        disabled={status !== "available"}
+        aria-disabled={status !== "available"}
+        title={status === "available" ? "Contact this donor" : "This donor is not currently available for contact"}
         className={cn(
           "h-7 rounded-lg px-3 text-[11px] font-bold",
           "border border-[#E2484D]/20 bg-[#FFF0F0] text-[#E2484D]",
           "transition-all duration-150",
           "hover:bg-[#E2484D] hover:text-white hover:border-[#E2484D]",
           "active:scale-[0.97]",
+          "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#FFF0F0] disabled:hover:text-[#E2484D] disabled:hover:border-[#E2484D]/20 disabled:active:scale-100",
         )}
       >
         Contact

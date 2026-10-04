@@ -7,12 +7,14 @@ import { InfoRow } from "./ui/InfoRow";
 import { MiniSelect } from "./ui/MiniSelect";
 import { BLOOD_GROUPS, AREAS, AVAILABILITY_OPTIONS, INPUT_CLASS, formatDate } from "./constants";
 import type { UserData } from "./types";
+import { useAvailabilityState } from "@/hooks/useAvailabilityState";
 
 type DonationForm = Pick<UserData,"bloodGroup"|"area"|"lastDonationDate"|"availability">;
 
-interface Props { user: UserData; onSave: (data: DonationForm) => void; }
+interface Props { user: UserData; onSave: (data: DonationForm) => Promise<boolean>; }
 
 export function DonationInfoCard({ user, onSave }: Props) {
+  const availability = useAvailabilityState(user.availability, user.availableFrom);
   const [editing, setEditing] = useState(false);
   const [form,    setForm]    = useState<DonationForm>({ bloodGroup:user.bloodGroup, area:user.area, lastDonationDate:user.lastDonationDate, availability:user.availability });
   const [saving,  setSaving]  = useState(false);
@@ -26,12 +28,15 @@ export function DonationInfoCard({ user, onSave }: Props) {
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setSaving(false);
-    setSuccess(true);
-    onSave(form);
-    await new Promise(r => setTimeout(r, 600));
-    setEditing(false);
+    try {
+      const saved = await onSave(form);
+      if (!saved) return;
+      setSuccess(true);
+      await new Promise(r => setTimeout(r, 600));
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -49,7 +54,7 @@ export function DonationInfoCard({ user, onSave }: Props) {
           <InfoRow icon={Droplets} label="Blood Group"        value={user.bloodGroup}                   />
           <InfoRow icon={MapPin}   label="Area"               value={user.area}                         />
           <InfoRow icon={Calendar} label="Last Donation Date" value={formatDate(user.lastDonationDate)} />
-          <InfoRow icon={Clock}    label="Availability"       value={user.availability}                 />
+          <InfoRow icon={Clock}    label="Availability"       value={availability.label} />
         </div>
       </div>
 

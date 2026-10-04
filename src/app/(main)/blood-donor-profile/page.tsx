@@ -5,6 +5,7 @@ import { getUserProfile } from "@/lib/profile";
 import { getDonorProfile } from "@/lib/donor";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getAvailabilityState } from "@/lib/availability";
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -17,6 +18,12 @@ export default async function DashboardPage() {
 
   if (profile.isDonor !== true) redirect("/become-a-donor");
 
+  const availability = getAvailabilityState(
+    typeof profile.availability === "string" ? profile.availability : "Unavailable",
+    typeof profile.availableFrom === "string" ? profile.availableFrom : null,
+    new Date(),
+    profile.updatedAt,
+  );
   const user: UserData = {
     fullName: session.user.name || "",
     email: session.user.email || "",
@@ -25,8 +32,9 @@ export default async function DashboardPage() {
     bloodGroup: typeof profile.bloodGroup === "string" ? profile.bloodGroup : "",
     area: typeof profile.area === "string" ? profile.area : "",
     lastDonationDate: donor?.lastDonationDate || (typeof profile.lastDonationDate === "string" ? profile.lastDonationDate : ""),
-    availability: typeof profile.availability === "string" ? profile.availability : "Unavailable",
-    contactEnabled: profile.availability !== "Unavailable",
+    availability: availability.availability,
+    availableFrom: availability.availableFrom,
+    contactEnabled: availability.available,
     photoUrl: typeof profile.avatarUrl === "string" ? profile.avatarUrl : null,
   };
 

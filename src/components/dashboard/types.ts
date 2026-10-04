@@ -7,6 +7,7 @@ export interface UserData {
   area:             string;
   lastDonationDate: string;
   availability:     string;
+  availableFrom:    string | null;
   contactEnabled:   boolean;
   photoUrl:         string | null;
 }

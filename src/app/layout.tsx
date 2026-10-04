@@ -10,6 +10,7 @@ import { ProfileDataProvider } from "@/components/profile/ProfileDataProvider";
 import type { UserProfile } from "@/components/user-profile/types";
 import { auth } from "@/lib/auth";
 import { getProfileCompletion, getUserProfile } from "@/lib/profile";
+import { getAvailabilityState } from "@/lib/availability";
 import { headers } from "next/headers";
 
 const manrope = Manrope({
@@ -25,6 +26,12 @@ export const metadata: Metadata = {
 async function AppFrame({ children }: { children: ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const rawProfile = session?.user ? await getUserProfile(session.user.id) : null;
+  const availability = getAvailabilityState(
+    typeof rawProfile?.availability === "string" ? rawProfile.availability : "Unavailable",
+    typeof rawProfile?.availableFrom === "string" ? rawProfile.availableFrom : null,
+    new Date(),
+    rawProfile?.updatedAt,
+  );
   const profile: UserProfile | null = session?.user
     ? {
         fullName: session.user.name || "",
@@ -39,7 +46,8 @@ async function AppFrame({ children }: { children: ReactNode }) {
         address: typeof rawProfile?.address === "string" ? rawProfile.address : "",
         lastDonationDate: typeof rawProfile?.lastDonationDate === "string" ? rawProfile.lastDonationDate : "",
         isDonor: rawProfile?.isDonor === true,
-        availability: typeof rawProfile?.availability === "string" ? rawProfile.availability : "available",
+        availability: availability.availability,
+        availableFrom: availability.availableFrom,
       }
     : null;
   const profileCompletion = profile

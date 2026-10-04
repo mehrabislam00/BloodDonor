@@ -5,6 +5,7 @@ import { Toggle } from "./ui/Toggle";
 import { MiniSelect } from "./ui/MiniSelect";
 import { AVAILABILITY_OPTIONS, AV_CONFIG } from "./constants";
 import type { UserData } from "./types";
+import { useAvailabilityState } from "@/hooks/useAvailabilityState";
 
 interface Props {
   user: UserData;
@@ -15,8 +16,9 @@ interface Props {
 }
 
 export function AvailabilityCard({ user, onUpdateAvailability, onToggleContact, onTurnOff, isSaving }: Props) {
-  const av = AV_CONFIG[user.availability] ?? AV_CONFIG["Unavailable"];
-  const badgeLabel = user.availability === "Available Now" ? "Available" : user.availability;
+  const state = useAvailabilityState(user.availability, user.availableFrom);
+  const av = AV_CONFIG[state.available ? "Available Now" : user.availability] ?? AV_CONFIG["Unavailable"];
+  const badgeLabel = state.available ? "Available" : "Unavailable";
 
   return (
     <div className="rounded-[18px] border border-[#EDE7E2] bg-white p-6 shadow-[0_4px_20px_rgba(27,22,21,0.05)]">
@@ -31,7 +33,7 @@ export function AvailabilityCard({ user, onUpdateAvailability, onToggleContact, 
               {badgeLabel}
             </span>
             <span className={`text-[28px] font-extrabold tracking-[-0.025em] ${av.labelColor}`}>
-              {av.label}
+              {state.available ? av.label : state.label === "Unavailable" ? av.label : state.label.toUpperCase()}
             </span>
           </div>
         </div>
@@ -39,7 +41,7 @@ export function AvailabilityCard({ user, onUpdateAvailability, onToggleContact, 
           className="flex shrink-0 items-center gap-2 rounded-[11px] border border-[#E0D9D4] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#68625E] transition-all hover:border-[#E2484D]/30 hover:bg-[#FFF5F5] hover:text-[#E2484D] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Power size={13} strokeWidth={2.2} />}
-          {isSaving ? "Saving..." : "Turn Off Availability"}
+          {isSaving ? "Saving..." : state.available ? "Turn Off Availability" : "Turn On Availability"}
         </button>
       </div>
 
@@ -51,13 +53,13 @@ export function AvailabilityCard({ user, onUpdateAvailability, onToggleContact, 
             Turn this on when you&apos;re currently willing to be contacted for blood donation.
           </p>
         </div>
-        <Toggle on={user.contactEnabled} onChange={onToggleContact} disabled={isSaving} />
+        <Toggle on={state.available} onChange={onToggleContact} disabled={isSaving} />
       </div>
 
       {/* Change availability */}
       <div className="mt-5">
         <p className="mb-2 text-[12.5px] font-semibold text-[#403A37]">Change availability</p>
-        <MiniSelect value={user.availability} onChange={onUpdateAvailability} options={AVAILABILITY_OPTIONS} disabled={isSaving} />
+        <MiniSelect value={state.available ? "Available Now" : user.availability} onChange={onUpdateAvailability} options={AVAILABILITY_OPTIONS} disabled={isSaving} />
       </div>
     </div>
   );

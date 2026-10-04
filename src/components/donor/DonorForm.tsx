@@ -479,6 +479,8 @@ const DonorForm = () => {
 
       updateProfile({
         ...form,
+        availability: result.profile.availability,
+        availableFrom: result.profile.availableFrom ?? null,
         avatarUrl: profilePhoto,
         isDonor: true,
       });

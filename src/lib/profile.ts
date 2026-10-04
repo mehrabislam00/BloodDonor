@@ -17,7 +17,11 @@ export const profileFields = [
 
 export type ProfileFields = Partial<{
   [K in (typeof profileFields)[number]]: string | boolean | null;
-}>;
+}> & {
+  availableFrom?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+};
 
 export function getProfileCompletion(
   profile: ProfileFields,

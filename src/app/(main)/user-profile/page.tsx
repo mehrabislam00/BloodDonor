@@ -9,6 +9,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import UserProfileClient from "@/components/user-profile/UserProfileClient";
 import React from "react";
+import { getAvailabilityState } from "@/lib/availability";
 
 
 // ── Server-side data fetch ────────────────────────────────────────────────
@@ -20,6 +21,12 @@ async function getUser(): Promise<UserProfile> {
   if (!session?.user) redirect("/login");
 
   const profile = await getUserProfile(session.user.id);
+  const availability = getAvailabilityState(
+    typeof profile.availability === "string" ? profile.availability : "Unavailable",
+    typeof profile.availableFrom === "string" ? profile.availableFrom : null,
+    new Date(),
+    profile.updatedAt,
+  );
   return {
     fullName: session.user.name || "",
     email: session.user.email || "",
@@ -32,7 +39,8 @@ async function getUser(): Promise<UserProfile> {
     gender: typeof profile.gender === "string" ? profile.gender : "",
     address: typeof profile.address === "string" ? profile.address : "",
     isDonor: profile.isDonor === true,
-    availability: typeof profile.availability === "string" ? profile.availability : "available",
+    availability: availability.availability,
+    availableFrom: availability.availableFrom,
   };
 }
 

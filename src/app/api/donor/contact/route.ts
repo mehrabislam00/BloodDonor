@@ -2,6 +2,7 @@ import { getUserProfile } from "@/lib/profile";
 import { getDonorProfile } from "@/lib/donor";
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { getAvailabilityState } from "@/lib/availability";
 
 const privateHeaders = { "Cache-Control": "private, no-store" };
 
@@ -22,6 +23,19 @@ export async function GET(request: Request) {
   ]);
   if (profile.isDonor !== true && !donor) {
     return NextResponse.json({ error: "Donor not found." }, { status: 404, headers: privateHeaders });
+  }
+
+  const availability = getAvailabilityState(
+    typeof profile.availability === "string" ? profile.availability : "Unavailable",
+    typeof profile.availableFrom === "string" ? profile.availableFrom : null,
+    new Date(),
+    profile.updatedAt,
+  );
+  if (!availability.available) {
+    return NextResponse.json(
+      { error: "This donor is not currently available for contact." },
+      { status: 403, headers: privateHeaders },
+    );
   }
 
   const phone = typeof profile.phone === "string" ? profile.phone.trim() : "";

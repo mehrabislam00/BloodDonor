@@ -1,12 +1,7 @@
 import type { UserData } from "./types";
+import { AVAILABILITY_OPTIONS } from "@/lib/availability";
 
-export const AVAILABILITY_OPTIONS = [
-  "Available Now",
-  "Available in 1 Month",
-  "Available in 2 Months",
-  "Available in 3 Months",
-  "Unavailable",
-];
+export { AVAILABILITY_OPTIONS };
 
 export type AvConfigItem = {
   dot: string; badge: string; badgeBg: string;
@@ -15,6 +10,7 @@ export type AvConfigItem = {
 
 export const AV_CONFIG: Record<string, AvConfigItem> = {
   "Available Now":         { dot:"bg-[#1A9E56]", badge:"text-[#1A9E56]", badgeBg:"bg-[#EDFAF3]", label:"AVAILABLE",       labelColor:"text-[#1B1615]" },
+  "Available in 15 Days":  { dot:"bg-[#F59E0B]", badge:"text-[#B45309]", badgeBg:"bg-[#FFFBEB]", label:"AVAILABLE SOON",  labelColor:"text-[#1B1615]" },
   "Available in 1 Month":  { dot:"bg-[#F59E0B]", badge:"text-[#B45309]", badgeBg:"bg-[#FFFBEB]", label:"AVAILABLE SOON",  labelColor:"text-[#1B1615]" },
   "Available in 2 Months": { dot:"bg-[#F59E0B]", badge:"text-[#B45309]", badgeBg:"bg-[#FFFBEB]", label:"AVAILABLE SOON",  labelColor:"text-[#1B1615]" },
   "Available in 3 Months": { dot:"bg-[#F97316]", badge:"text-[#C2410C]", badgeBg:"bg-[#FFF7ED]", label:"AVAILABLE LATER", labelColor:"text-[#1B1615]" },
@@ -30,7 +26,7 @@ export const MOCK_USER: UserData = {
   bloodGroup:"O+",        area:"Mirpur",
   lastDonationDate:"2025-07-12",
   availability:"Available Now",
-  contactEnabled:true,    photoUrl:null,
+  contactEnabled:true,    photoUrl:null, availableFrom:null,
 };
 
 export function getGreeting(name: string) {

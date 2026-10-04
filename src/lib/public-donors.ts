@@ -1,4 +1,5 @@
 import { database } from "@/lib/mongodb";
+import { getAvailabilityState } from "@/lib/availability";
 
 export type PublicDonorCard = {
   id: string;
@@ -8,9 +9,12 @@ export type PublicDonorCard = {
   location: string;
   bloodGroup: string;
   available: boolean;
+  availability: string;
+  availableFrom: string | null;
   activeTime: string;
   lastActiveAt: number | null;
   lastDonation: string;
+  lastDonationAt: number | null;
 };
 
 type DonorProfileRecord = {
@@ -19,6 +23,7 @@ type DonorProfileRecord = {
   area?: string;
   bloodGroup?: string;
   availability?: string;
+  availableFrom?: string | null;
   lastDonationDate?: string;
   updatedAt?: Date | string;
 };
@@ -75,6 +80,7 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
             area: 1,
             bloodGroup: 1,
             availability: 1,
+            availableFrom: 1,
             lastDonationDate: 1,
             updatedAt: 1,
           },
@@ -107,6 +113,7 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
             area: 1,
             bloodGroup: 1,
             availability: 1,
+            availableFrom: 1,
             lastDonationDate: 1,
             updatedAt: 1,
           },
@@ -131,8 +138,16 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
       const profile = profilesById.get(userId);
       const registeredDonor = donorsById.get(userId);
       const name = namesById.get(userId) ?? "Donor";
-      const availability = profile?.availability?.trim().toLowerCase();
+      const availabilityState = getAvailabilityState(
+        profile?.availability ?? "Unavailable",
+        profile?.availableFrom,
+        new Date(),
+        profile?.updatedAt,
+      );
       const lastActiveDate = parseDate(profile?.updatedAt ?? registeredDonor?.updatedAt);
+      const lastDonationDate = parseDate(
+        registeredDonor?.lastDonationDate ?? profile?.lastDonationDate,
+      );
       return {
         id: userId,
         initials: getInitials(name),
@@ -140,13 +155,13 @@ export async function getPublicDonorCards(): Promise<PublicDonorCard[]> {
         verified: false,
         location: profile?.area?.trim() || "Location not provided",
         bloodGroup: profile?.bloodGroup?.trim() || "",
-        available: availability === "available" || availability === "available now",
+        available: availabilityState.available,
+        availability: availabilityState.available ? "Available Now" : availabilityState.label,
+        availableFrom: availabilityState.availableFrom,
         activeTime: formatElapsed(lastActiveDate, "profile"),
         lastActiveAt: lastActiveDate?.getTime() ?? null,
-        lastDonation: formatElapsed(
-          parseDate(registeredDonor?.lastDonationDate ?? profile?.lastDonationDate),
-          "donation",
-        ),
+        lastDonation: formatElapsed(lastDonationDate, "donation"),
+        lastDonationAt: lastDonationDate?.getTime() ?? null,
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));

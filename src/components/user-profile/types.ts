@@ -14,6 +14,7 @@ export type UserProfile = {
   lastDonationDate?: string;
   isDonor:     boolean;
   availability: string;
+  availableFrom?: string | null;
 };
 
 export const MOCK_USER: UserProfile = {
@@ -28,13 +29,21 @@ export const MOCK_USER: UserProfile = {
   gender:      "",
   address:     "",
   isDonor:    true,
-  availability: "available",
+  availability: "Available Now",
+  availableFrom: null,
 };
 
 export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 export const AREAS        = ["Dhanmondi", "Mirpur", "Uttara", "Gulshan", "Mohammadpur", "Banani", "Motijheel", "Farmgate"];
 export const GENDERS      = ["Female", "Male", "Non-binary", "Prefer not to say"];
-export const AVAILABILITY  = ["available", "available-soon", "unavailable"];
+export const AVAILABILITY  = [
+  "Available Now",
+  "Available in 15 Days",
+  "Available in 1 Month",
+  "Available in 2 Months",
+  "Available in 3 Months",
+  "Unavailable",
+];
 
 // Profile completion — fields that count toward 100%
 export function calcCompletion(u: UserProfile): number {

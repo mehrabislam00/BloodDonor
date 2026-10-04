@@ -11,6 +11,7 @@ import { MOCK_USER, getGreeting } from "./constants";
 import type { UserData } from "./types";
 import { useProfileData } from "@/components/profile/ProfileDataProvider";
 import { toast } from "@/components/toast/ui/toast";
+import { createAvailabilityRecord, getAvailabilityState } from "@/lib/availability";
 
 export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: UserData }) {
   const { updateProfile } = useProfileData();
@@ -21,12 +22,23 @@ export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: User
 
   const firstName = user.fullName.split(" ")[0];
 
-  const updateUser = async (patch: Partial<UserData>) => {
-    if (savingRef.current) return;
+  const updateUser = async (patch: Partial<UserData>): Promise<boolean> => {
+    if (savingRef.current) return false;
     savingRef.current = true;
     setIsSaving(true);
     const previousUser = user;
-    const nextUser = { ...user, ...patch };
+    const availabilityRecord = patch.availability
+      ? createAvailabilityRecord(patch.availability)
+      : null;
+    const nextUser = {
+      ...user,
+      ...patch,
+      ...(availabilityRecord ?? {}),
+    };
+    nextUser.contactEnabled = getAvailabilityState(
+      nextUser.availability,
+      nextUser.availableFrom,
+    ).available;
     setUser(nextUser);
 
     try {
@@ -47,22 +59,6 @@ export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: User
       });
       if (!profileResponse.ok) throw new Error("Unable to save your donor profile.");
 
-      if (nextUser.availability || nextUser.lastDonationDate) {
-        const donorResponse = await fetch("/api/donor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: nextUser.phone,
-          whatsapp: nextUser.whatsapp,
-          bloodGroup: nextUser.bloodGroup,
-          area: nextUser.area,
-          availability: nextUser.availability,
-          lastDonationDate: nextUser.lastDonationDate,
-        }),
-      });
-        if (!donorResponse.ok) throw new Error("Unable to save your donor details.");
-      }
-
       updateProfile({
         fullName: nextUser.fullName,
         email: nextUser.email,
@@ -71,17 +67,20 @@ export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: User
         bloodGroup: nextUser.bloodGroup,
         area: nextUser.area,
         availability: nextUser.availability,
+        availableFrom: nextUser.availableFrom,
         avatarUrl: nextUser.photoUrl,
         lastDonationDate: nextUser.lastDonationDate,
         isDonor: true,
       });
       toast.success({ title: "Donor profile updated", description: "Your donor information has been saved." });
+      return true;
     } catch (error) {
       setUser(previousUser);
       toast.error({
         title: "Donor profile update failed",
         description: error instanceof Error ? error.message : "Please try again.",
       });
+      return false;
     } finally {
       savingRef.current = false;
       setIsSaving(false);
@@ -100,8 +99,16 @@ export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: User
             user={user}
             isSaving={isSaving}
             onUpdateAvailability={v => updateUser({ availability: v })}
-            onToggleContact={() => updateUser({ contactEnabled: !user.contactEnabled })}
-            onTurnOff={() => updateUser({ availability: "Unavailable" })}
+            onToggleContact={() => updateUser({
+              availability: getAvailabilityState(user.availability, user.availableFrom).available
+                ? "Unavailable"
+                : "Available Now",
+            })}
+            onTurnOff={() => updateUser({
+              availability: getAvailabilityState(user.availability, user.availableFrom).available
+                ? "Unavailable"
+                : "Available Now",
+            })}
           />
           <ProfileCard
             user={user}
@@ -114,7 +121,7 @@ export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: User
 
         {/* Row 3: Personal + Donation info */}
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <PersonalInfoCard  user={user} onSave={data => updateUser(data)} />
+          <PersonalInfoCard  user={user} onSave={data => { void updateUser(data); }} />
           <DonationInfoCard  user={user} onSave={data => updateUser(data)} />
         </div>
 
@@ -124,7 +131,11 @@ export function DonorDashboard({ initialUser = MOCK_USER }: { initialUser?: User
         <EditProfileModal
           user={user}
           onClose={() => setShowFullEdit(false)}
-          onSave={updated => { setUser(updated); setShowFullEdit(false); }}
+          onSave={async updated => {
+            const saved = await updateUser(updated);
+            if (saved) setShowFullEdit(false);
+            return saved;
+          }}
         />
       )}
     </div>

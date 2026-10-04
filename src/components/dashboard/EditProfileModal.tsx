@@ -7,7 +7,11 @@ import { MiniSelect } from "./ui/MiniSelect";
 import { BLOOD_GROUPS, AREAS, AVAILABILITY_OPTIONS, INPUT_CLASS } from "./constants";
 import type { UserData } from "./types";
 
-interface Props { user: UserData; onClose: () => void; onSave: (u: UserData) => void; }
+interface Props {
+  user: UserData;
+  onClose: () => void;
+  onSave: (u: UserData) => Promise<boolean | void> | boolean | void;
+}
 
 export function EditProfileModal({ user, onClose, onSave }: Props) {
   const [form,    setForm]    = useState({ ...user });
@@ -39,12 +43,15 @@ export function EditProfileModal({ user, onClose, onSave }: Props) {
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 1400));
-    setSaving(false);
-    setSuccess(true);
-    onSave(form);
-    await new Promise(r => setTimeout(r, 600));
-    onClose();
+    try {
+      const saved = await onSave(form);
+      if (saved === false) return;
+      setSuccess(true);
+      await new Promise(r => setTimeout(r, 600));
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const lbl = (text: string, icon: React.ElementType, optional = false) => {

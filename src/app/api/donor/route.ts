@@ -1,6 +1,11 @@
 import { auth } from "@/lib/auth";
 import { getUserProfile, updateUserProfile } from "@/lib/profile";
 import { getDonorProfile, updateDonorProfile } from "@/lib/donor";
+import {
+  createAvailabilityRecord,
+  getAvailabilityState,
+  normalizeAvailability,
+} from "@/lib/availability";
 import { NextResponse } from "next/server";
 
 async function getSession(request: Request) {
@@ -63,12 +68,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid donor information." }, { status: 400 });
   }
 
+  const requestedAvailability = createAvailabilityRecord(availability);
+  if (!requestedAvailability) {
+    return NextResponse.json({ error: "Invalid donor availability." }, { status: 400 });
+  }
+  const currentAvailability = typeof profile.availability === "string"
+    ? normalizeAvailability(profile.availability)
+    : null;
+  const currentAvailableFrom = getAvailabilityState(
+    typeof profile.availability === "string" ? profile.availability : "Unavailable",
+    typeof profile.availableFrom === "string" ? profile.availableFrom : null,
+    new Date(),
+    profile.updatedAt,
+  ).availableFrom;
+  const availabilityRecord = {
+    availability: requestedAvailability.availability,
+    availableFrom: currentAvailability === requestedAvailability.availability && currentAvailableFrom
+      ? currentAvailableFrom
+      : requestedAvailability.availableFrom,
+  };
+
   await updateUserProfile(session.user.id, {
     phone,
     whatsapp,
     area,
     bloodGroup,
-    availability,
+    ...availabilityRecord,
     lastDonationDate,
     isDonor: true,
   });
@@ -83,7 +108,8 @@ export async function POST(request: Request) {
       whatsapp,
       area,
       bloodGroup,
-      availability,
+      availability: availabilityRecord.availability,
+      availableFrom: availabilityRecord.availableFrom,
       lastDonationDate,
       isDonor: true,
       fullName: session.user.name || "",

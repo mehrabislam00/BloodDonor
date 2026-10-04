@@ -4,12 +4,14 @@ import React from "react";
 import Link from "next/link";
 import { Droplets, ArrowRight, Heart } from "lucide-react";
 import type { UserProfile } from "./types";
+import { useAvailabilityState } from "@/hooks/useAvailabilityState";
 
 interface Props {
   user: UserProfile;
 }
 
 export default function DonorStatusCard({ user }: Props) {
+  const availability = useAvailabilityState(user.availability, user.availableFrom);
   if (!user.isDonor) {
     return (
       <div className="flex items-center justify-between gap-6 rounded-[20px] border border-[#EDE7E2] bg-white px-7 py-6 shadow-[0_8px_28px_rgba(27,22,21,0.06)]">
@@ -47,7 +49,7 @@ export default function DonorStatusCard({ user }: Props) {
           Registered as a Blood Donor
         </p>
         <p className="mt-1 text-[13px] text-white/70">
-          Your donor profile is active.
+          {availability.label}
         </p>
       </div>
 
