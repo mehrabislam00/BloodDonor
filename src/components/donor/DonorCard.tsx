@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { ReportModal }  from "./ReportModal";
 import { CallButton }   from "./CallButton";
+import { WhatsAppConfirmationModal } from "./WhatsAppConfirmationModal";
 import { toast } from "@/lib/toast";
 import { buildWhatsAppUrl } from "@/lib/phone";
 import { requireAuthentication } from "@/lib/require-authentication";
@@ -30,12 +31,10 @@ export interface Donor {
 
 const DonorCard = ({ donor }: { donor: Donor }) => {
   const [showReport, setShowReport] = useState(false);
+  const [showWhatsAppConfirmation, setShowWhatsAppConfirmation] = useState(false);
   const router = useRouter();
 
-  const openWhatsApp = async () => {
-    if (!(await requireAuthentication("Please log in to contact a donor on WhatsApp."))) return;
-    if (!window.confirm("Contact this donor?")) return;
-
+  const getWhatsAppUrl = async () => {
     try {
       const response = await fetch(`/api/donor/contact?donorId=${encodeURIComponent(donor.id)}`, {
         cache: "no-store",
@@ -48,25 +47,33 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
         } else {
           toast.error("Could not contact this donor. Please try again.");
         }
-        return;
+        return null;
       }
 
       const contact = await response.json() as { whatsapp?: string; phone?: string };
       const number = contact.whatsapp;
       if (!number) {
         toast.warning("WhatsApp number is not available.");
-        return;
+        return null;
       }
 
       const url = buildWhatsAppUrl(number);
       if (!url) {
         toast.warning("WhatsApp number is not available.");
-        return;
+        return null;
       }
 
-      window.location.assign(url);
+      return url;
     } catch {
       toast.error("Could not contact this donor. Please try again.");
+      return null;
+    }
+  };
+
+  const openWhatsAppConfirmation = async () => {
+    if (showWhatsAppConfirmation) return;
+    if (await requireAuthentication("Please log in to contact a donor on WhatsApp.")) {
+      setShowWhatsAppConfirmation(true);
     }
   };
 
@@ -173,7 +180,7 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
 
           <button
             type="button"
-            onClick={openWhatsApp}
+            onClick={() => void openWhatsAppConfirmation()}
             aria-label={`Open WhatsApp chat with ${donor.name}`}
             className="
               flex h-[42px] items-center justify-center gap-2
@@ -220,6 +227,13 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
           </button>
         </div>
       </div>
+
+      {showWhatsAppConfirmation && (
+        <WhatsAppConfirmationModal
+          onConfirm={getWhatsAppUrl}
+          onClose={() => setShowWhatsAppConfirmation(false)}
+        />
+      )}
 
       {/* ReportModal — outside card to avoid z-index issues */}
       {showReport && (
