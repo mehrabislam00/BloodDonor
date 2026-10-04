@@ -79,10 +79,8 @@ export function CallButton({ donorId, donorName }: Props) {
     }
   }, [display]);
 
-  const handleContact = async () => {
+  const requestContact = async () => {
     if (!(await requireAuthentication("Please log in to contact a donor."))) return;
-    if (!window.confirm("Contact this donor?")) return;
-
     try {
       const response = await fetch(`/api/donor/contact?donorId=${encodeURIComponent(donorId)}`, {
         cache: "no-store",
@@ -142,7 +140,7 @@ export function CallButton({ donorId, donorName }: Props) {
     <div ref={wrapRef}>
       <button
         type="button"
-        onClick={() => (revealed ? void handleCopy() : void handleContact())}
+        onClick={() => (revealed ? void handleCopy() : void requestContact())}
         className={`${base} ${revealed ? active : idle}`}
         aria-label={
           revealed

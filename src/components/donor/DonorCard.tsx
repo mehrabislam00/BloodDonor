@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { ReportModal }  from "./ReportModal";
 import { CallButton }   from "./CallButton";
-import { WhatsAppConfirmationModal } from "./WhatsAppConfirmationModal";
+import { ContactConfirmationModal } from "./ContactConfirmationModal";
 import { toast } from "@/lib/toast";
 import { buildWhatsAppUrl } from "@/lib/phone";
 import { requireAuthentication } from "@/lib/require-authentication";
@@ -229,7 +229,8 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
       </div>
 
       {showWhatsAppConfirmation && (
-        <WhatsAppConfirmationModal
+        <ContactConfirmationModal
+          message="You are about to contact this donor on WhatsApp."
           onConfirm={getWhatsAppUrl}
           onClose={() => setShowWhatsAppConfirmation(false)}
         />

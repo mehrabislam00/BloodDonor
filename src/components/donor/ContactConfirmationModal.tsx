@@ -5,11 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface Props {
   onConfirm: () => Promise<string | null>;
   onClose: () => void;
+  message: string;
 }
 
 const CLOSE_DURATION_MS = 200;
 
-export function WhatsAppConfirmationModal({ onConfirm, onClose }: Props) {
+export function ContactConfirmationModal({ onConfirm, onClose, message }: Props) {
   const [visible, setVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const closing = useRef(false);
@@ -38,12 +39,12 @@ export function WhatsAppConfirmationModal({ onConfirm, onClose }: Props) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [closeModal, submitting]);
 
-  const confirm = async () => {
+  const handleYes = async () => {
     if (submitting || closing.current) return;
     setSubmitting(true);
     try {
       const url = await onConfirm();
-      if (!url) {
+      if (url === null) {
         setSubmitting(false);
         return;
       }
@@ -52,7 +53,7 @@ export function WhatsAppConfirmationModal({ onConfirm, onClose }: Props) {
       setVisible(false);
       closeTimer.current = setTimeout(() => {
         onClose();
-        window.location.assign(url);
+        if (url) window.location.assign(url);
       }, CLOSE_DURATION_MS);
     } catch {
       setSubmitting(false);
@@ -63,7 +64,7 @@ export function WhatsAppConfirmationModal({ onConfirm, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
-        aria-label="Close WhatsApp confirmation"
+        aria-label="Close contact confirmation"
         onClick={closeModal}
         disabled={submitting}
         className={`absolute inset-0 bg-[#1B1615]/30 backdrop-blur-sm transition-opacity duration-200 ${
@@ -74,19 +75,19 @@ export function WhatsAppConfirmationModal({ onConfirm, onClose }: Props) {
       <section
         role="dialog"
         aria-modal="true"
-        aria-labelledby="whatsapp-confirmation-title"
+        aria-labelledby="contact-confirmation-title"
         className={`relative w-full max-w-[380px] rounded-[20px] border border-[#EDE7E2] bg-white p-6 shadow-[0_32px_80px_rgba(27,22,21,0.18)] transition-all duration-200 ease-out ${
           visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-95 opacity-0"
         }`}
       >
         <h2
-          id="whatsapp-confirmation-title"
+          id="contact-confirmation-title"
           className="text-[17px] font-extrabold tracking-[-0.02em] text-[#1B1615]"
         >
           Are you sure?
         </h2>
         <p className="mt-2 text-[13px] leading-relaxed text-[#68625E]">
-          You are about to contact this donor on WhatsApp.
+          {message}
         </p>
 
         <div className="mt-6 flex justify-end gap-2.5">
@@ -100,7 +101,7 @@ export function WhatsAppConfirmationModal({ onConfirm, onClose }: Props) {
           </button>
           <button
             type="button"
-            onClick={() => void confirm()}
+            onClick={() => void handleYes()}
             disabled={submitting}
             className="h-[40px] rounded-[10px] bg-[#E2484D] px-5 text-[13px] font-semibold text-white transition-colors hover:bg-[#D83E43] disabled:cursor-not-allowed disabled:opacity-60"
           >
