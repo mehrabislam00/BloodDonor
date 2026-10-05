@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import PageLoader from "./PageLoader";
 
 interface NavigationLoadingContextType {
@@ -11,114 +11,135 @@ interface NavigationLoadingContextType {
 }
 
 const NavigationLoadingContext = createContext<NavigationLoadingContextType>({
-  isNavigating: false,
+  isNavigating:    false,
   startNavigation: () => {},
-  stopNavigation: () => {},
+  stopNavigation:  () => {},
 });
 
 export const useNavigationLoading = () => useContext(NavigationLoadingContext);
 
-function NavigationLoadingConsumer({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("Loading page");
-  const pendingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+export function NavigationLoadingProvider({ children }: { children: React.ReactNode }) {
+  const pathname                      = usePathname();
+  const [isNavigating,  setNavigating] = useState(false);
+  const [loadingMessage, setMessage]   = useState("Loading page");
+  const timerRef                       = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // When pathname or searchParams change, the destination page is mounted and ready!
-  useEffect(() => {
-    if (pendingTimerRef.current) {
-      clearTimeout(pendingTimerRef.current);
-      pendingTimerRef.current = null;
+  // ── helpers ───────────────────────────────────────────────────────────────
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
-    setIsNavigating(false);
-  }, [pathname, searchParams]);
-
-  const startNavigation = (msg = "Loading page") => {
-    setLoadingMessage(msg);
-    setIsNavigating(true);
-  };
-
-  const stopNavigation = () => {
-    if (pendingTimerRef.current) {
-      clearTimeout(pendingTimerRef.current);
-      pendingTimerRef.current = null;
-    }
-    setIsNavigating(false);
-  };
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      // Find closest anchor tag
-      const target = (e.target as HTMLElement)?.closest("a");
-      if (!target) return;
-
-      const href = target.getAttribute("href");
-      if (!href) return;
-
-      // Ignore external links, mailto, tel, downloads, or anchor hash jumps
-      if (
-        href.startsWith("http://") ||
-        href.startsWith("https://") ||
-        href.startsWith("mailto:") ||
-        href.startsWith("tel:") ||
-        href.startsWith("#") ||
-        target.getAttribute("target") === "_blank" ||
-        target.hasAttribute("download")
-      ) {
-        return;
-      }
-
-      // Ignore modified clicks (cmd, ctrl, shift, alt)
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
-        return;
-      }
-
-      // Check whether target is the current page
-      try {
-        const targetUrl = new URL(href, window.location.origin);
-        const currentUrl = new URL(window.location.href);
-
-        if (
-          targetUrl.pathname === currentUrl.pathname &&
-          targetUrl.search === currentUrl.search
-        ) {
-          // Already on this page
-          return;
-        }
-
-        // Delay showing the loader by a slight threshold (80ms) so instantaneous
-        // client cache hits render directly without flashing a loader.
-        // If navigation takes longer (fetching server data/RSC), show full-page loader.
-        if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current);
-        pendingTimerRef.current = setTimeout(() => {
-          setIsNavigating(true);
-        }, 80);
-      } catch {
-        // invalid URL format, ignore
-      }
-    };
-
-    const handlePopState = () => {
-      if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current);
-      pendingTimerRef.current = setTimeout(() => {
-        setIsNavigating(true);
-      }, 80);
-    };
-
-    document.addEventListener("click", handleClick, true);
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current);
-      document.removeEventListener("click", handleClick, true);
-      window.removeEventListener("popstate", handlePopState);
-    };
   }, []);
 
+  const stop = useCallback(() => {
+    clearTimer();
+    setNavigating(false);
+  }, [clearTimer]);
+
+  // public API
+  const startNavigation = useCallback((msg = "Loading page") => {
+    setMessage(msg);
+    setNavigating(true);
+  }, []);
+
+  const stopNavigation = stop;
+
+  // ── Dismiss when pathname changes (cross-page navigation) ─────────────────
+  // usePathname() does NOT suspend — safe to use without Suspense.
+  useEffect(() => {
+    stop();
+  }, [pathname, stop]);
+
+  // ── Main effect: click interception + pushState hook ─────────────────────
+  useEffect(() => {
+    // ── intercept history.pushState ───────────────────────────────────────
+    // Next.js calls pushState once the RSC payload is received and the new
+    // URL is ready to display — for BOTH pathname changes AND search-param-
+    // only changes (e.g. /find-a-donor?bloodGroup=A → ?bloodGroup=B).
+    // Hooking here gives us an accurate "navigation complete" signal without
+    // needing useSearchParams() (which suspends its subtree and causes the
+    // children-unmount/remount problem).
+    const origPush    = history.pushState.bind(history);
+    const origReplace = history.replaceState.bind(history);
+
+    history.pushState = (...args) => {
+      origPush(...args);
+      stop();
+    };
+    history.replaceState = (...args) => {
+      origReplace(...args);
+      stop();
+    };
+
+    // ── link click interception ───────────────────────────────────────────
+    const handleClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement)?.closest("a");
+      if (!anchor) return;
+
+      const href = anchor.getAttribute("href");
+      if (!href) return;
+
+      // Skip non-navigating links
+      if (
+        href.startsWith("http://")  ||
+        href.startsWith("https://") ||
+        href.startsWith("mailto:")  ||
+        href.startsWith("tel:")     ||
+        href.startsWith("#")        ||
+        anchor.getAttribute("target") === "_blank" ||
+        anchor.hasAttribute("download")
+      ) return;
+
+      // Skip modified clicks (open in new tab etc.)
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+
+      try {
+        const target  = new URL(href, window.location.origin);
+        const current = new URL(window.location.href);
+
+        // Already on this exact page — no navigation needed
+        if (
+          target.pathname === current.pathname &&
+          target.search   === current.search
+        ) return;
+
+        // Wait 150 ms before showing the loader so that cached/instant
+        // transitions (< 150 ms) never flash a loader at all.
+        clearTimer();
+        timerRef.current = setTimeout(() => setNavigating(true), 150);
+      } catch {
+        // Malformed href — ignore
+      }
+    };
+
+    // ── back / forward navigation ─────────────────────────────────────────
+    const handlePopState = () => {
+      // popstate fires when the URL has already changed (instant from cache,
+      // or slow from the server). Show a loader only if it takes time.
+      clearTimer();
+      timerRef.current = setTimeout(() => setNavigating(true), 150);
+    };
+
+    document.addEventListener("click",    handleClick,    true);
+    window.addEventListener("popstate",   handlePopState);
+
+    return () => {
+      clearTimer();
+      history.pushState    = origPush;
+      history.replaceState = origReplace;
+      document.removeEventListener("click",  handleClick,    true);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [clearTimer, stop]);
+
   return (
-    <NavigationLoadingContext.Provider value={{ isNavigating, startNavigation, stopNavigation }}>
+    <NavigationLoadingContext.Provider
+      value={{ isNavigating, startNavigation, stopNavigation }}
+    >
+      {/* children are NEVER unmounted by this component */}
       {children}
+
       {isNavigating && (
         <PageLoader
           fullPage
@@ -129,12 +150,3 @@ function NavigationLoadingConsumer({ children }: { children: React.ReactNode }) 
     </NavigationLoadingContext.Provider>
   );
 }
-
-export function NavigationLoadingProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <React.Suspense fallback={null}>
-      <NavigationLoadingConsumer>{children}</NavigationLoadingConsumer>
-    </React.Suspense>
-  );
-}
-

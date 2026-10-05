@@ -328,4 +328,3 @@ const DonorCard = ({ donor }: { donor: Donor }) => {
 };
 
 export default DonorCard;
-export default DonorCard;
