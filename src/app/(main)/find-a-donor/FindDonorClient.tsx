@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { AlignJustify, Droplets } from "lucide-react";
 import DonorCard, { type Donor } from "@/components/donor/DonorCard";
 import { DonorSearch, type DonorSearchFilters } from "@/components/find-donor/DonorSearch";
@@ -14,21 +14,29 @@ const PER_PAGE = 6;
 const FindDonorClient = ({
   initialBloodGroup,
   initialArea,
+  initialDonors = [],
 }: {
   initialBloodGroup: string;
   initialArea: string;
+  initialDonors?: Donor[];
 }) => {
-  const [donors, setDonors] = useState<Donor[]>([]);
+  const [donors, setDonors] = useState<Donor[]>(initialDonors);
   const [filters, setFilters] = useState<DonorSearchFilters>({
     bloodGroup: initialBloodGroup,
     area: initialArea,
     activity: "",
     availability: "",
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const isFirstMount = useRef(true);
 
   useEffect(() => {
+    // Avoid double fetching on initial mount if initialDonors was already provided
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     let active = true;
     const controller = new AbortController();
     const params = new URLSearchParams({
@@ -38,6 +46,7 @@ const FindDonorClient = ({
       availability: filters.availability,
     });
 
+    setIsLoading(true);
     fetch(`/api/donors?${params.toString()}`, { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
         const result = await response.json() as { donors?: Donor[]; error?: string };
@@ -76,7 +85,7 @@ const FindDonorClient = ({
       {/* ══════════════════════════════════════════
           Hero + Search
       ══════════════════════════════════════════ */}
-      <section className="w-full border-b border-[#E7E0DB] bg-[#faf4f0] py-16 sm:py-20">
+      <section className="w-full border-b border-[#E7E0DB] dark:border-white/10 bg-[#faf4f0] dark:bg-background py-16 sm:py-20">
         <div className="container mx-auto w-full  px-4 sm:px-6 lg:px-8">
 
           {/* Badge */}
@@ -85,19 +94,18 @@ const FindDonorClient = ({
           </p>
 
           {/* Heading */}
-          <h1 className="text-[38px] font-extrabold leading-tight tracking-[-0.025em] text-[#1B1615] sm:text-[52px]">
+          <h1 className="text-[38px] font-extrabold leading-tight tracking-[-0.025em] text-[#1B1615] dark:text-foreground sm:text-[52px]">
             Find a Blood Donor
           </h1>
 
           {/* Subtitle */}
-          <p className="mt-3 text-[15px] leading-relaxed text-[#9E8E85]">
-            Search available donors by blood group and area.
+          <p className="mt-3 text-[15px] leading-relaxed text-[#9E8E85] dark:text-muted-foreground">
+            Search available donors by blood group and area across Dhaka.
           </p>
 
           {/* Search Card */}
           <div className="mt-10">
             <DonorSearch initialFilters={{ bloodGroup: initialBloodGroup, area: initialArea }} onSearch={(nextFilters) => {
-              setDonors([]);
               setIsLoading(true);
               setFilters(nextFilters);
               setPage(1);
@@ -112,7 +120,7 @@ const FindDonorClient = ({
       ══════════════════════════════════════════ */}
       <section
         id="results"
-        className="w-full bg-[#FAF7F4] pb-15 pt-15 scroll-mt-6"
+        className="w-full bg-[#FAF7F4] dark:bg-background/50 pb-15 pt-15 scroll-mt-6"
       >
         <div className="container mx-auto w-full  px-4 sm:px-6 lg:px-8">
 
@@ -120,44 +128,45 @@ const FindDonorClient = ({
           <div className="mb-6 flex items-end justify-between">
             <div>
               <p className="text-[14px] font-bold uppercase tracking-[0.14em] text-[#E2484D]">
-                {filteredDonors.length} donors found
+                {filteredDonors.length} {filteredDonors.length === 1 ? "donor" : "donors"} found
               </p>
-              <h2 className="mt-0.5 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-[#1B1615] sm:text-[28px]">
+              <h2 className="mt-0.5 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-[#1B1615] dark:text-foreground sm:text-[28px]">
                 Donors matching your search
               </h2>
             </div>
 
             {/* Sort label */}
-            <span className="hidden items-center gap-2 text-[13px] text-[#9E8E85] sm:flex">
+            <span className="hidden items-center gap-2 text-[13px] text-[#9E8E85] dark:text-muted-foreground sm:flex">
               <AlignJustify size={14} strokeWidth={2} />
-              <span className="text-[14px] font-medium text-[#80736C]">Recently active first</span>
+              <span className="text-[14px] font-medium text-[#80736C] dark:text-muted-foreground">Recently active first</span>
             </span>
           </div>
 
           {/* ── Donor grid ── */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={`grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 transition-opacity duration-200 ${isLoading ? "opacity-60" : "opacity-100"}`}>
             {pageDonors.map((donor) => (
               <DonorCard key={donor.id} donor={donor} />
             ))}
           </div>
           {isLoading && (
-            <p className="mt-8 text-center text-[14px] text-[#9E8E85]">
-              Loading donors…
-            </p>
+            <div className="mt-8 flex items-center justify-center gap-2 text-[14px] text-[#9E8E85] dark:text-muted-foreground">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#E2484D]/20 border-t-[#E2484D]" />
+              <span>Updating donors…</span>
+            </div>
           )}
           {!isLoading && filteredDonors.length === 0 && (
-            <div className="mx-auto mt-8 flex max-w-xl items-start gap-3 rounded-2xl border border-[#EDE7E2] bg-white/70 px-5 py-4">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFE9E9] text-[#E2484D]">
+            <div className="mx-auto mt-8 flex max-w-xl items-start gap-3 rounded-2xl border border-[#EDE7E2] dark:border-white/10 bg-white/80 dark:bg-card/80 px-5 py-4 shadow-xs">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFE9E9] dark:bg-[#E2484D]/15 text-[#E2484D]">
                 <Droplets size={16} strokeWidth={2} />
               </span>
               <div>
-                <h3 className="text-[14px] font-semibold text-[#403A37]">
+                <h3 className="text-[14px] font-semibold text-[#403A37] dark:text-foreground">
                   No donors found
                 </h3>
-                <p className="mt-1 text-[13px] leading-relaxed text-[#9E8E85]">
+                <p className="mt-1 text-[13px] leading-relaxed text-[#9E8E85] dark:text-muted-foreground">
                   We couldn&apos;t find any donors matching your current filters.
                 </p>
-                <p className="mt-0.5 text-[12px] leading-relaxed text-[#B5A89F]">
+                <p className="mt-0.5 text-[12px] leading-relaxed text-[#B5A89F] dark:text-muted-foreground/70">
                   Try adjusting your blood group, area, activity, or availability filters.
                 </p>
               </div>
@@ -175,7 +184,7 @@ const FindDonorClient = ({
                   "text-[14px] font-semibold transition-all duration-200",
                   p === page
                     ? "bg-[#E2484D] text-white shadow-[0_4px_14px_rgba(226,72,77,0.30)]"
-                    : "border border-[#E7E0DB] bg-white text-[#68625E] hover:border-[#E2484D]/40 hover:text-[#E2484D]",
+                    : "border border-[#E7E0DB] dark:border-white/10 bg-white dark:bg-card text-[#68625E] dark:text-muted-foreground hover:border-[#E2484D]/40 hover:text-[#E2484D]",
                 ].join(" ")}
               >
                 {p}

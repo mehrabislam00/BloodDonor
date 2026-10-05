@@ -1,4 +1,5 @@
 import FindDonorClient from "./FindDonorClient";
+import { getPublicDonorCards } from "@/lib/public-donors";
 
 type FindDonorSearchParams = {
   bloodGroup?: string | string[];
@@ -18,11 +19,20 @@ export default async function FindDonorPage({
   const initialBloodGroup = getSingleSearchParam(params.bloodGroup);
   const initialArea = getSingleSearchParam(params.area);
 
+  // Pre-load initial donors server-side so the page never renders incomplete or empty
+  const initialDonors = await getPublicDonorCards({
+    bloodGroup: initialBloodGroup,
+    area: initialArea,
+    activity: "all",
+    availability: "",
+  });
+
   return (
     <FindDonorClient
       key={`${initialBloodGroup}:${initialArea}`}
       initialBloodGroup={initialBloodGroup}
       initialArea={initialArea}
+      initialDonors={initialDonors}
     />
   );
 }
