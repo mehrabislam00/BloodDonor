@@ -12,6 +12,8 @@ export function DashboardHeader({ greeting }: Props) {
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-[#9E8E85]">
           Manage your donor information and availability.
+          
+          
         </p>
       </div>
     </section>

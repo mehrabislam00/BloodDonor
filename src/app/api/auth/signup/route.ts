@@ -122,8 +122,10 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, user: result.user });
-  } catch (error: any) {
-    const message = error?.message || "Unable to create your account. Please try again.";
+  } catch (error: unknown) {
+    const message = error instanceof Error
+      ? error.message
+      : "Unable to create your account. Please try again.";
 
     if (/already.*(exists|registered)|already.*taken/i.test(message)) {
       return NextResponse.json(

@@ -11,7 +11,7 @@ import {
   getAvailabilityState,
   normalizeAvailability,
 } from "@/lib/availability";
-import { getDonorProfile, updateDonorProfile } from "@/lib/donor";
+import { deleteDonorProfile, getDonorProfile, updateDonorProfile } from "@/lib/donor";
 import { normalizeDonationDate } from "@/lib/donation-date";
 import { NextResponse } from "next/server";
 
@@ -111,7 +111,11 @@ export async function PATCH(request: Request) {
   }
 
   await updateUserProfile(session.user.id, updates);
-  const donor = (updates.isDonor === true || currentProfile.isDonor === true)
+  if (updates.isDonor === false) {
+    await deleteDonorProfile(session.user.id);
+  }
+  const donor = updates.isDonor !== false
+    && (updates.isDonor === true || currentProfile.isDonor === true)
     && typeof updates.lastDonationDate === "string"
     ? await updateDonorProfile(session.user.id, { lastDonationDate: updates.lastDonationDate })
     : null;

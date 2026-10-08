@@ -63,38 +63,38 @@ function parseDate(value: Date | string | number | undefined): Date | null {
 export async function getPublicDonorCards(
   filters: DonorSearchFilters = { bloodGroup: "", area: "", activity: "all", availability: "" },
 ): Promise<PublicDonorCard[]> {
-  const [registeredProfiles, donorRegistry] = await Promise.all([
-    database
-      .collection<DonorProfileRecord>("userProfiles")
-      .find(
-        { isDonor: true },
-        {
-          projection: {
-            userId: 1,
-            area: 1,
-            bloodGroup: 1,
-            availability: 1,
-            availableFrom: 1,
-            lastDonationDate: 1,
-            lastActiveAt: 1,
-            updatedAt: 1,
-          },
+  const registeredProfiles = await database
+    .collection<DonorProfileRecord>("userProfiles")
+    .find(
+      { isDonor: true },
+      {
+        projection: {
+          userId: 1,
+          area: 1,
+          bloodGroup: 1,
+          availability: 1,
+          availableFrom: 1,
+          lastDonationDate: 1,
+          lastActiveAt: 1,
+          updatedAt: 1,
         },
-      )
-      .toArray(),
-    database
-      .collection<DonorRegistryRecord>("donorProfiles")
-      .find({}, { projection: { userId: 1, lastDonationDate: 1 } })
-      .toArray(),
-  ]);
+      },
+    )
+    .toArray();
 
   const profileIds = registeredProfiles
     .map((profile) => profile.userId)
     .filter((userId): userId is string => typeof userId === "string" && userId.length > 0);
-  const donorIds = donorRegistry
-    .map((donor) => donor.userId)
-    .filter((userId): userId is string => typeof userId === "string" && userId.length > 0);
-  const userIds = [...new Set([...profileIds, ...donorIds])];
+  const donorRegistry = profileIds.length === 0
+    ? []
+    : await database
+      .collection<DonorRegistryRecord>("donorProfiles")
+      .find(
+        { userId: { $in: profileIds } },
+        { projection: { userId: 1, lastDonationDate: 1 } },
+      )
+      .toArray();
+  const userIds = [...new Set(profileIds)];
   if (userIds.length === 0) return [];
 
   const validObjectIds = userIds

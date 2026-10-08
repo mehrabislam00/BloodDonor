@@ -31,3 +31,7 @@ export async function updateDonorProfile(
 
   return getDonorProfile(userId);
 }
+
+export async function deleteDonorProfile(userId: string): Promise<void> {
+  await donors.deleteOne({ userId });
+}

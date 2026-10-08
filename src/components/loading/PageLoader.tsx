@@ -115,7 +115,7 @@ export default function PageLoader({
       aria-label={message}
       className="
         fixed inset-0 z-[999999]
-        flex h-screen w-screen min-h-dvh
+        flex
         flex-col items-center justify-center overflow-hidden
         bg-[#FDF9F6] dark:bg-background
         px-4 transition-colors duration-300

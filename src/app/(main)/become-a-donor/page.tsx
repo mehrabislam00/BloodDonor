@@ -1,6 +1,9 @@
 import React from "react";
 import { Heart, Lock, Zap, ShieldCheck, Users } from "lucide-react";
 import DonorForm from "@/components/donor/DonorForm";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 
 const TRUST_POINTS = [
@@ -9,7 +12,10 @@ const TRUST_POINTS = [
   { icon: Users,       text: "1,200+ donors already in the community"        },
 ];
 
-const Become_A_Donor = () => {
+const Become_A_Donor = async () => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) redirect("/login");
+
   return (
     <>
      <section className="relative min-h-screen w-full overflow-hidden bg-[#FAF7F4] py-16 sm:py-20">

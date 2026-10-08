@@ -168,13 +168,19 @@ const RegisterForm = () => {
 
     const validationError = getNameValidationError(fullName);
     if (!fullName) {
-      setNameStatus({ status: "idle", message: "" });
-      return;
+      const timeout = window.setTimeout(
+        () => setNameStatus({ status: "idle", message: "" }),
+        0,
+      );
+      return () => window.clearTimeout(timeout);
     }
 
     if (validationError) {
-      setNameStatus({ status: "invalid", message: validationError });
-      return;
+      const timeout = window.setTimeout(
+        () => setNameStatus({ status: "invalid", message: validationError }),
+        0,
+      );
+      return () => window.clearTimeout(timeout);
     }
 
     const timeout = window.setTimeout(async () => {
@@ -207,14 +213,20 @@ const RegisterForm = () => {
 
     const normalized = form.email.trim();
     if (!normalized) {
-      setEmailStatus({ status: "idle", message: "" });
-      return;
+      const timeout = window.setTimeout(
+        () => setEmailStatus({ status: "idle", message: "" }),
+        0,
+      );
+      return () => window.clearTimeout(timeout);
     }
 
     const validationError = getEmailValidationError(normalized);
     if (validationError) {
-      setEmailStatus({ status: "invalid", message: validationError });
-      return;
+      const timeout = window.setTimeout(
+        () => setEmailStatus({ status: "invalid", message: validationError }),
+        0,
+      );
+      return () => window.clearTimeout(timeout);
     }
 
     const timeout = window.setTimeout(async () => {

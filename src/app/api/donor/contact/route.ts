@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     getUserProfile(donorId),
     getDonorProfile(donorId),
   ]);
-  if (profile.isDonor !== true && !donor) {
+  if (profile.isDonor !== true || !donor) {
     return NextResponse.json({ error: "Donor not found." }, { status: 404, headers: privateHeaders });
   }
 
