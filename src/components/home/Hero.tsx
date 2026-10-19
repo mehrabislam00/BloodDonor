@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@heroui/react";
 import { HomeSearch } from "./HomeSearch";
 import { BloodDonorCards } from "./BloodDonorCards";
-import person1 from "@/assets/person1.avif";
+import person1 from "@/assets/person1.webp";
 import person2 from "@/assets/person2.jpg";
 import person3 from "@/assets/person3.jpg";
 

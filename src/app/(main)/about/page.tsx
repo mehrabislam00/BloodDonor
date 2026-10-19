@@ -33,7 +33,7 @@ const About = () => {
       {/* ══════════════════════════════════════════
           Section 1 — Hero / Intro
       ══════════════════════════════════════════ */}
-      <section className="w-full bg-[#f9f4f0] py-16 sm:py-24">
+      <section className="w-full bg-[#faf4f0] py-16 sm:py-24">
         <div className="container mx-auto w-full  px-4 sm:px-6 lg:px-8">
 
           {/* Badge */}

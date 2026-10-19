@@ -46,11 +46,9 @@ const TermsPage = () => {
       {/* ══════════════════════════════════
           Hero
       ══════════════════════════════════ */}
-      <section className="relative w-full overflow-hidden bg-[#F9F4F0] py-16 sm:py-24">
+      <section className="relative w-full overflow-hidden bg-[#faf4f0] py-16 sm:py-24">
 
-        {/* Decorative blobs */}
-        <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#E2484D]/5 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-10 left-0 h-48 w-48 rounded-full bg-[#E2484D]/4 blur-2xl" />
+  
 
         <div className="container relative mx-auto w-full px-4 sm:px-6 lg:px-8">
 
