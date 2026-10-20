@@ -3,6 +3,7 @@ import { database } from "@/lib/mongodb";
 import { getAvailabilityState } from "@/lib/availability";
 import { normalizeDonationDate } from "@/lib/donation-date";
 import { filterAndSortDonors, type DonorSearchFilters } from "@/lib/donor-search";
+import { database as adminDatabase } from "@/lib/mongodb";
 
 export type PublicDonorCard = {
   id: string;
@@ -81,8 +82,13 @@ export async function getPublicDonorCards(
       },
     )
     .toArray();
+  const bannedUsers = await adminDatabase.collection<{ userId: string }>("adminBans")
+    .find({ active: true }, { projection: { userId: 1 } })
+    .toArray();
+  const bannedIds = new Set(bannedUsers.map((ban) => ban.userId));
+  const visibleProfiles = registeredProfiles.filter((profile) => !bannedIds.has(profile.userId));
 
-  const profileIds = registeredProfiles
+  const profileIds = visibleProfiles
     .map((profile) => profile.userId)
     .filter((userId): userId is string => typeof userId === "string" && userId.length > 0);
   const donorRegistry = profileIds.length === 0

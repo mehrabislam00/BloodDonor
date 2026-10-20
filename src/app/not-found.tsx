@@ -2,12 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft, Home, Search, HeartHandshake, HelpCircle } from "lucide-react";
 import { BloodDropMark } from "@/components/layout/BrandLogo";
 
 export default function NotFound() {
   const router = useRouter();
+  const pathname = usePathname();
+  const isAdminAccessBlocked = pathname === "/admin/login";
 
   const handleGoBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -69,7 +71,7 @@ export default function NotFound() {
         {/* Status Pill Badge */}
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#E2484D]/15 bg-[#FFE8E8] px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#E2484D] dark:bg-[#E2484D]/15">
           <span className="h-2 w-2 rounded-full bg-[#E2484D] animate-pulse" />
-          Error 404 • Page Not Found
+          {isAdminAccessBlocked ? "Admin access restricted" : "Error 404 • Page Not Found"}
         </div>
 
         {/* Prominent 404 Number */}
@@ -79,12 +81,15 @@ export default function NotFound() {
 
         {/* Headings & Friendly Explanation */}
         <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#1B1615] sm:text-3xl dark:text-[#F8F5F2]">
-          Looks like this page doesn&apos;t exist
+          {isAdminAccessBlocked
+            ? "Admin login is unavailable for your current account"
+            : "Looks like this page doesn't exist"}
         </h2>
 
         <p className="mt-3 max-w-md text-sm leading-relaxed text-[#68625E] sm:text-base dark:text-[#A79D96]">
-          The link you followed may be broken or the page may have been moved.
-          Don&apos;t worry—our community of blood donors is always within reach.
+          {isAdminAccessBlocked
+            ? "Admin access requires you to log out of your current user account first. Please log out and try again."
+            : "The link you followed may be broken or the page may have been moved. Don't worry—our community of blood donors is always within reach."}
         </p>
 
         {/* ── Primary Action Buttons ── */}
@@ -166,4 +171,3 @@ export default function NotFound() {
     </main>
   );
 }
-

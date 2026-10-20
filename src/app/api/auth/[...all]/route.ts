@@ -2,12 +2,33 @@ import { auth } from "@/lib/auth";
 import { hasCredentialPassword } from "@/lib/account-security";
 import { NextResponse } from "next/server";
 import { toNextJsHandler } from "better-auth/next-js";
+import { database } from "@/lib/mongodb";
 
 const authHandler = toNextJsHandler(auth);
 
 export const GET = authHandler.GET;
 
 export async function POST(request: Request) {
+	if (new URL(request.url).pathname.endsWith("/sign-in/email")) {
+		const body = await request.clone().json().catch(() => null) as { email?: unknown } | null;
+		const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+		if (email) {
+			const user = await database.collection<{ id: string }>("user").findOne(
+				{ email },
+				{ projection: { id: 1 } },
+			);
+			if (user) {
+				const blocked = await database.collection("adminBans").findOne({ userId: user.id, active: true });
+				const deleted = await database.collection("adminDeletedUsers").findOne({ userId: user.id });
+				if (blocked || deleted) {
+					return NextResponse.json(
+						{ code: "ACCOUNT_RESTRICTED", message: "This account is restricted. Please contact support." },
+						{ status: 403 },
+					);
+				}
+			}
+		}
+	}
 	if (new URL(request.url).pathname !== "/api/auth/delete-user") {
 		return authHandler.POST(request);
 	}

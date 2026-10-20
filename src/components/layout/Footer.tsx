@@ -35,7 +35,7 @@ const Footer = () => {
       focus-visible:outline-[#E2484D]
     "
   >
-    support@blooddonor.com
+    supportblooddonor@gmail.com
   </a>
 </div>
           </div>

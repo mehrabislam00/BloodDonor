@@ -1,0 +1,66 @@
+import { type ReactNode } from "react";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import PageLoader from "@/components/loading/PageLoader";
+import { ProfileDataProvider } from "@/components/profile/ProfileDataProvider";
+import { auth } from "@/lib/auth";
+import { getProfileCompletion, getUserProfile } from "@/lib/profile";
+import { getDonorProfile } from "@/lib/donor";
+import { getAvailabilityState } from "@/lib/availability";
+import { headers } from "next/headers";
+import type { UserProfile } from "@/components/user-profile/types";
+
+export default async function PublicAppFrame({ children }: { children: ReactNode }) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const [rawProfile, donor] = session?.user
+    ? await Promise.all([
+        getUserProfile(session.user.id),
+        getDonorProfile(session.user.id),
+      ])
+    : [null, null];
+  const availability = getAvailabilityState(
+    typeof rawProfile?.availability === "string" ? rawProfile.availability : "Unavailable",
+    typeof rawProfile?.availableFrom === "string" ? rawProfile.availableFrom : null,
+    new Date(),
+    rawProfile?.updatedAt,
+  );
+  const profile: UserProfile | null = session?.user
+    ? {
+        fullName: session.user.name || "",
+        email: session.user.email || "",
+        phone: typeof rawProfile?.phone === "string" ? rawProfile.phone : "",
+        whatsapp: typeof rawProfile?.whatsapp === "string" ? rawProfile.whatsapp : "",
+        area: typeof rawProfile?.area === "string" ? rawProfile.area : "",
+        bloodGroup: typeof rawProfile?.bloodGroup === "string" ? rawProfile.bloodGroup : "",
+        avatarUrl: typeof rawProfile?.avatarUrl === "string" ? rawProfile.avatarUrl : null,
+        dateOfBirth: typeof rawProfile?.dateOfBirth === "string" ? rawProfile.dateOfBirth : "",
+        gender: typeof rawProfile?.gender === "string" ? rawProfile.gender : "",
+        address: typeof rawProfile?.address === "string" ? rawProfile.address : "",
+        lastDonationDate: typeof rawProfile?.lastDonationDate === "string" && rawProfile.lastDonationDate !== ""
+          ? rawProfile.lastDonationDate
+          : donor?.lastDonationDate || "",
+        isDonor: rawProfile?.isDonor === true,
+        availability: availability.availability,
+        availableFrom: availability.availableFrom,
+      }
+    : null;
+  const profileCompletion = profile
+    ? getProfileCompletion(rawProfile ?? {}, profile.fullName, profile.email)
+    : 0;
+  const profileRevision = profile
+    ? JSON.stringify(profile).split("").reduce((hash, character) => (hash * 31 + character.charCodeAt(0)) | 0, 0).toString(36)
+    : "anonymous";
+
+  return (
+    <ProfileDataProvider
+      key={`${session?.user.id ?? "anonymous"}-${profileRevision}`}
+      initialProfile={profile}
+      initialProfileCompletion={profileCompletion}
+      initialSession={session}
+    >
+      <Navbar initialSession={session} />
+      <div className="flex-1">{children}</div>
+      <Footer />
+    </ProfileDataProvider>
+  );
+}
