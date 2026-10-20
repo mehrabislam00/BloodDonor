@@ -14,7 +14,7 @@
 
 ## 🌐 Live Demo
 
-* **Live Deployment:** [https://blood-donor-ten.vercel.app](https://blood-donor-coral.vercel.app/) *(or your configured Vercel URL)*
+* **Live Deployment:** [https://blood-donor-ten.vercel.app](https://blood-donor-coral.vercel.app/) 
 * **Repository:** [https://github.com/mehrabislam00/BloodDonor](https://github.com/mehrabislam00/BloodDonor)
 * **Support Email:** [supportblooddonor@gmail.com](mailto:mehrabislam18@gmail.com)
 
