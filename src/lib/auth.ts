@@ -8,22 +8,36 @@ const googleClientSecret =
   process.env.BETTER_AUTH_GOOGLE_CLIENT_SECRET ||
   process.env.BETTER_AUTH_GOOGLE_SECRET ||
   process.env.GOOGLE_CLIENT_SECRET;
-const authBaseURL = process.env.BETTER_AUTH_URL;
-const isProductionDeployment =
-  process.env.VERCEL_ENV === "production" ||
-  process.env.DEPLOYMENT_ENV === "production";
 
-if (isProductionDeployment) {
-  let validProductionURL = false;
-  try {
-    validProductionURL = Boolean(authBaseURL && new URL(authBaseURL).protocol === "https:");
-  } catch {
-    validProductionURL = false;
+function getAuthBaseURL(): string | undefined {
+  const envUrl = process.env.BETTER_AUTH_URL?.trim();
+  if (envUrl) {
+    if (envUrl.startsWith("http://") || envUrl.startsWith("https://")) {
+      return envUrl;
+    }
+    return `https://${envUrl}`;
   }
-  if (!validProductionURL) {
-    throw new Error("BETTER_AUTH_URL must be the canonical HTTPS URL in production.");
+
+  const publicAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (publicAppUrl) {
+    if (publicAppUrl.startsWith("http://") || publicAppUrl.startsWith("https://")) {
+      return publicAppUrl;
+    }
+    return `https://${publicAppUrl}`;
   }
+
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  return undefined;
 }
+
+const authBaseURL = getAuthBaseURL();
 
 const deletedUsers = database.collection("deletedUsers");
 const deletedDonors = database.collection("deletedDonors");
