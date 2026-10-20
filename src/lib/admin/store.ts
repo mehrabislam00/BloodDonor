@@ -1,5 +1,6 @@
 import { ObjectId, type Filter } from "mongodb";
 import { database } from "@/lib/mongodb";
+import { createNotification } from "@/lib/notifications";
 
 export type AdminBan = {
   _id?: ObjectId;
@@ -83,6 +84,7 @@ export async function setDonorBan(
 ) {
   const bans = database.collection<AdminBan>("adminBans");
   if (active) {
+    const existingBan = await bans.findOne({ userId, active: true }, { projection: { _id: 1 } });
     await bans.updateOne(
       { userId },
       {
@@ -92,6 +94,19 @@ export async function setDonorBan(
       { upsert: true },
     );
     await writeAdminAudit("donor.banned", actorId, userId, { reason });
+    if (!existingBan) {
+      await createNotification({
+        recipientId: userId,
+        title: "Your account has been restricted",
+        message: reason,
+        type: "ban",
+        severity: "critical",
+        adminId: actorId,
+        action: "account-banned",
+        requiresAcknowledgement: true,
+        blocksInteraction: true,
+      });
+    }
   } else {
     await bans.updateOne(
       { userId, active: true },

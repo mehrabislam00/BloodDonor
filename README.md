@@ -16,6 +16,26 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Environment configuration
+
+Copy `.env.example` to a local `.env` file for development. Never commit
+the local file or real secret values.
+
+For production, configure these variables in the hosting provider's secret
+manager:
+
+- `BETTER_AUTH_SECRET`: a new, long random Better Auth secret.
+- `BETTER_AUTH_DB_URL`: the production MongoDB connection string.
+- `BETTER_AUTH_URL`: the canonical production URL, including `https://`.
+- `DEPLOYMENT_ENV=production` (or the hosting platform's production
+  environment indicator) to enable the HTTPS URL startup check.
+- `BETTER_AUTH_GOOGLE_CLIENT_ID` and `BETTER_AUTH_GOOGLE_SECRET`: the OAuth
+  credentials whose authorized redirect URI matches the production callback.
+
+The production domain is intentionally not hardcoded in this repository. Set
+the deployment value before release and rotate any credential whose
+confidentiality is uncertain.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

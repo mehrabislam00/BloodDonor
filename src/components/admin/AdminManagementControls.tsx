@@ -22,12 +22,14 @@ export default function AdminManagementControls({
         ? "Ban this donor? They will be blocked from login and hidden from public donor search."
         : "Lift this donor ban?";
     if (!window.confirm(message)) return;
+    const reason = action === "ban-donor" ? window.prompt("Enter the reason for this ban:")?.trim() ?? "" : "";
+    if (action === "ban-donor" && !reason) return;
     setBusy(true);
     try {
       const response = await fetch("/api/admin/manage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, userId }),
+        body: JSON.stringify({ action, userId, reason }),
       });
       if (!response.ok) throw new Error("Admin action failed.");
       router.refresh();

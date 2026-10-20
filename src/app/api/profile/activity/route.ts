@@ -1,14 +1,14 @@
-import { auth } from "@/lib/auth";
 import { database } from "@/lib/mongodb";
+import { blockedAccountResponse, getUserAccess } from "@/lib/user-auth";
 import { NextResponse } from "next/server";
 
 const profiles = database.collection("userProfiles");
 const privateHeaders = { "Cache-Control": "private, no-store" };
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: privateHeaders });
+  const { session, blocked } = await getUserAccess(request);
+  if (!session?.user || blocked) {
+    return NextResponse.json(blocked ? blockedAccountResponse : { error: "Unauthorized" }, { status: blocked ? 403 : 401, headers: privateHeaders });
   }
 
   const lastActiveAt = new Date();

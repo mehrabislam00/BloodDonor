@@ -1,20 +1,24 @@
 import { getUserProfile } from "@/lib/profile";
 import { getDonorProfile } from "@/lib/donor";
-import { auth } from "@/lib/auth";
+import { blockedAccountResponse, getUserAccess } from "@/lib/user-auth";
+import { isAccountBlocked } from "@/lib/admin/store";
 import { NextResponse } from "next/server";
 import { getAvailabilityState } from "@/lib/availability";
 
 const privateHeaders = { "Cache-Control": "private, no-store" };
 
 export async function GET(request: Request) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: privateHeaders });
+  const { session, blocked } = await getUserAccess(request);
+  if (!session?.user || blocked) {
+    return NextResponse.json(blocked ? blockedAccountResponse : { error: "Unauthorized" }, { status: blocked ? 403 : 401, headers: privateHeaders });
   }
 
   const donorId = new URL(request.url).searchParams.get("donorId");
   if (!donorId || donorId.length > 256) {
     return NextResponse.json({ error: "Invalid donor." }, { status: 400, headers: privateHeaders });
+  }
+  if (await isAccountBlocked(donorId)) {
+    return NextResponse.json({ error: "Donor not found." }, { status: 404, headers: privateHeaders });
   }
 
   const [profile, donor] = await Promise.all([

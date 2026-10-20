@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { Droplets, ShieldCheck, LogOut } from "lucide-react";
+import { ShieldCheck, LogOut } from "lucide-react";
+import { BloodDropMark } from "@/components/layout/BrandLogo";
 
 export function AdminNavbar() {
   return (
@@ -9,7 +10,7 @@ export function AdminNavbar() {
       {/* Logo */}
       <Link href="/admin" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
         <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-[#E2484D] text-white shadow-[0_3px_10px_rgba(226,72,77,0.28)]">
-          <Droplets size={16} strokeWidth={2.2} />
+          <BloodDropMark className="h-5 w-4 fill-white" />
         </div>
         <span className="text-[16px] font-extrabold tracking-[-0.02em] text-[#1B1615]">
           Blood<span className="text-[#E2484D]">Donor</span>

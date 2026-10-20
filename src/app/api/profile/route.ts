@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { blockedAccountResponse, getUserAccess } from "@/lib/user-auth";
 import {
   getUserProfile,
   profileFields,
@@ -15,15 +16,11 @@ import { deleteDonorProfile, getDonorProfile, updateDonorProfile } from "@/lib/d
 import { normalizeDonationDate } from "@/lib/donation-date";
 import { NextResponse } from "next/server";
 
-async function getSession(request: Request) {
-  return auth.api.getSession({ headers: request.headers });
-}
-
 export async function GET(request: Request) {
-  const session = await getSession(request);
+  const { session, blocked } = await getUserAccess(request);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user || blocked) {
+    return NextResponse.json(blocked ? blockedAccountResponse : { error: "Unauthorized" }, { status: blocked ? 403 : 401 });
   }
 
   const [profile, donor] = await Promise.all([
@@ -42,10 +39,10 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const session = await getSession(request);
+  const { session, blocked } = await getUserAccess(request);
 
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user || blocked) {
+    return NextResponse.json(blocked ? blockedAccountResponse : { error: "Unauthorized" }, { status: blocked ? 403 : 401 });
   }
 
   let body: Record<string, unknown>;

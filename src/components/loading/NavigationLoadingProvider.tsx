@@ -34,6 +34,44 @@ export function NavigationLoadingProvider({ children }: { children: React.ReactN
   }, []);
 
   useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const link = target.closest("a");
+      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+
+      const href = link.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+
+      const destination = new URL(href, window.location.href);
+      if (destination.origin !== window.location.origin || destination.pathname === pathname) return;
+
+      startNavigation("Loading page");
+    };
+
+    document.addEventListener("click", handleDocumentClick, true);
+    return () => document.removeEventListener("click", handleDocumentClick, true);
+  }, [pathname, startNavigation]);
+
+  useEffect(() => {
+    if (!isNavigating) return;
+    const timeout = window.setTimeout(stopNavigation, 10000);
+    return () => window.clearTimeout(timeout);
+  }, [isNavigating, stopNavigation]);
+
+  useEffect(() => {
     const pathnameChanged = previousPathname.current !== pathname;
     previousPathname.current = pathname;
     if (!pathnameChanged || !isNavigating) return;
@@ -50,7 +88,7 @@ export function NavigationLoadingProvider({ children }: { children: React.ReactN
         <PageLoader
           fullPage
           message={loadingMessage}
-          subMessage="Connecting to Dhaka's donor network"
+          subMessage="Please wait a moment"
         />
       )}
     </NavigationLoadingContext.Provider>

@@ -51,7 +51,9 @@ export default async function AdminDashboardPage() {
           <StatCard label="Total users" value={stats.totalUsers} />
           <StatCard label="Donor profiles" value={stats.totalDonors} />
           <StatCard label="Available donors" value={stats.availableDonors} />
-          <StatCard label="Reports" value={stats.totalReports} />
+          <StatCard label="Unavailable donors" value={stats.unavailableDonors} />
+          <StatCard label="Pending reports" value={stats.pendingReports} />
+          <StatCard label="Resolved reports" value={stats.resolvedReports} />
         </div>
 
         <section className="mt-8 overflow-hidden rounded-2xl border border-[#EDE7E2] bg-white shadow-sm">

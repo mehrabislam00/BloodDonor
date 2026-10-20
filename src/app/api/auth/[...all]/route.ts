@@ -3,10 +3,17 @@ import { hasCredentialPassword } from "@/lib/account-security";
 import { NextResponse } from "next/server";
 import { toNextJsHandler } from "better-auth/next-js";
 import { database } from "@/lib/mongodb";
+import { isAccountBlocked } from "@/lib/admin/store";
 
 const authHandler = toNextJsHandler(auth);
 
-export const GET = authHandler.GET;
+export async function GET(request: Request) {
+	const session = await auth.api.getSession({ headers: request.headers });
+	if (session?.user?.id && await isAccountBlocked(session.user.id)) {
+		return NextResponse.json({ error: "Your account is currently restricted.", code: "ACCOUNT_BLOCKED" }, { status: 403 });
+	}
+	return authHandler.GET(request);
+}
 
 export async function POST(request: Request) {
 	if (new URL(request.url).pathname.endsWith("/sign-in/email")) {

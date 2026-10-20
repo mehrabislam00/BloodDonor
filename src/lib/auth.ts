@@ -8,6 +8,22 @@ const googleClientSecret =
   process.env.BETTER_AUTH_GOOGLE_CLIENT_SECRET ||
   process.env.BETTER_AUTH_GOOGLE_SECRET ||
   process.env.GOOGLE_CLIENT_SECRET;
+const authBaseURL = process.env.BETTER_AUTH_URL;
+const isProductionDeployment =
+  process.env.VERCEL_ENV === "production" ||
+  process.env.DEPLOYMENT_ENV === "production";
+
+if (isProductionDeployment) {
+  let validProductionURL = false;
+  try {
+    validProductionURL = Boolean(authBaseURL && new URL(authBaseURL).protocol === "https:");
+  } catch {
+    validProductionURL = false;
+  }
+  if (!validProductionURL) {
+    throw new Error("BETTER_AUTH_URL must be the canonical HTTPS URL in production.");
+  }
+}
 
 const deletedUsers = database.collection("deletedUsers");
 const deletedDonors = database.collection("deletedDonors");
@@ -47,7 +63,7 @@ async function archiveDeletedUser(user: { id: string; email?: string; name?: str
 }
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: authBaseURL,
   ...(googleClientId && googleClientSecret
     ? {
         socialProviders: {

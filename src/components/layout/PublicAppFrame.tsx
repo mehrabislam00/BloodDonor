@@ -9,6 +9,7 @@ import { getDonorProfile } from "@/lib/donor";
 import { getAvailabilityState } from "@/lib/availability";
 import { headers } from "next/headers";
 import type { UserProfile } from "@/components/user-profile/types";
+import UserNotificationPopup from "@/components/notifications/UserNotificationPopup";
 
 export default async function PublicAppFrame({ children }: { children: ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -59,6 +60,7 @@ export default async function PublicAppFrame({ children }: { children: ReactNode
       initialSession={session}
     >
       <Navbar initialSession={session} />
+      <UserNotificationPopup />
       <div className="flex-1">{children}</div>
       <Footer />
     </ProfileDataProvider>

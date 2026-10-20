@@ -1,4 +1,5 @@
 import React from "react";
+import { SUPPORT_EMAIL } from "@/lib/support";
 import {
   Scale, Users, FileCheck,
   Stethoscope, Lock, RefreshCw,
@@ -181,7 +182,7 @@ const TermsPage = () => {
                 Questions?
               </p>
               <a
-                href="mailto:support@blooddonor.com"
+                href={`mailto:${SUPPORT_EMAIL}`}
                 className="
                   text-[13.5px] font-medium text-[#E2484D]
                   transition-colors duration-150
@@ -190,7 +191,7 @@ const TermsPage = () => {
                   focus-visible:outline-[#E2484D]
                 "
               >
-                support@blooddonor.com
+                {SUPPORT_EMAIL}
               </a>
             </div>
           </div>

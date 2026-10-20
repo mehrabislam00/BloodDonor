@@ -1,4 +1,5 @@
 import React from "react";
+import { SUPPORT_EMAIL } from "@/lib/support";
 import {
   Database,
   Target,
@@ -38,7 +39,7 @@ const POLICIES = [
   {
     icon:  Mail,
     title: "Contact & data requests",
-    body:  "To request deletion or correction of your data, contact us at support@blooddonor.com. We will respond within a reasonable timeframe.",
+    body:  `To request deletion or correction of your data, contact us at ${SUPPORT_EMAIL}. We will respond within a reasonable timeframe.`,
   },
 ];
 
@@ -183,7 +184,7 @@ const PrivacyPage = () => {
                 Questions?
               </p>
               <a
-                href="mailto:support@blooddonor.com"
+                href={`mailto:${SUPPORT_EMAIL}`}
                 className="
                   text-[13.5px] font-medium text-[#E2484D]
                   transition-colors duration-150
@@ -192,7 +193,7 @@ const PrivacyPage = () => {
                   focus-visible:outline-[#E2484D]
                 "
               >
-                support@blooddonor.com
+                {SUPPORT_EMAIL}
               </a>
             </div>
           </div>

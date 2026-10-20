@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { blockedAccountResponse, getUserAccess } from "@/lib/user-auth";
 import { database } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 
@@ -12,9 +12,9 @@ const REPORT_REASONS = [
 ] as const;
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { session, blocked } = await getUserAccess(request);
+  if (!session?.user || blocked) {
+    return NextResponse.json(blocked ? blockedAccountResponse : { error: "Unauthorized" }, { status: blocked ? 403 : 401 });
   }
 
   let body: unknown;
@@ -47,6 +47,7 @@ export async function POST(request: Request) {
     reporterId: session.user.id,
     reason,
     description: typeof description === "string" ? description.trim() : "",
+    status: "Pending",
     createdAt: new Date(),
   });
 

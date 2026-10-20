@@ -2,7 +2,11 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Droplets, LayoutDashboard, Users, Flag, Settings, LogOut, UserCog, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/toast/ui/toast";
+import { LayoutDashboard, Users, Flag, LogOut, UserCog, X } from "lucide-react";
+import { BloodDropMark } from "@/components/layout/BrandLogo";
 
 const NAV = [
   { section: "Overview",   items: [{ label: "Dashboard", href: "/admin",         icon: LayoutDashboard }] },
@@ -18,37 +22,57 @@ interface Props {
   onToggle: () => void; onMobileClose: () => void;
 }
 
+function AdminBrand({ collapsed, showClose }: { collapsed: boolean; showClose?: boolean }) {
+  if (collapsed && !showClose) {
+    return (
+      <Link href="/admin" aria-label="BloodDonor Admin" className="flex h-9 w-9 items-center justify-center">
+        <BloodDropMark className="h-8 w-7 fill-[#E2484D]" />
+      </Link>
+    );
+  }
+
+  return (
+    <Link href="/admin" aria-label="BloodDonor Admin" className="flex items-center gap-2.5">
+      <BloodDropMark className="h-9 w-7 shrink-0 fill-[#E2484D]" />
+      <div>
+        <p className="text-[16px] font-medium tracking-[-0.03em] text-[#1B1615]">Blood<span className="text-[#E2484D]">Donor</span></p>
+        <p className="mt-0.5 text-[9.5px] font-medium uppercase tracking-[0.2em] text-[#E2484D]">Administration</p>
+      </div>
+    </Link>
+  );
+}
+
 function SidebarInner({ collapsed, onToggle, onMobileClose, showClose }: Props & { showClose?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const active = (href: string) => href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+  async function handleLogout() {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      const { error } = await authClient.signOut();
+      if (error) {
+        toast.error({ title: "Logout failed", description: "We couldn't sign you out. Please try again." });
+        return;
+      }
+      router.replace("/admin/login");
+      router.refresh();
+    } catch {
+      toast.error({ title: "Logout failed", description: "We couldn't sign you out. Please try again." });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Brand */}
       <div className={`flex h-[58px] shrink-0 items-center border-b border-[#EDE7E2] px-4 ${collapsed && !showClose ? "justify-center" : "justify-between"}`}>
-        {(!collapsed || showClose) && (
-          <Link href="/admin" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#E2484D] text-white shadow-[0_3px_10px_rgba(226,72,77,0.28)]">
-              <Droplets size={15} strokeWidth={2.2} />
-            </div>
-            <div>
-              <p className="text-[14px] font-extrabold tracking-[-0.02em] text-[#1B1615]">Blood<span className="text-[#E2484D]">Donor</span></p>
-              <p className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-[#C5B8B0]">Admin Panel</p>
-            </div>
-          </Link>
-        )}
-        {collapsed && !showClose && (
-          <Link href="/admin" className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-[#E2484D] text-white shadow-[0_3px_10px_rgba(226,72,77,0.28)]">
-            <Droplets size={15} strokeWidth={2.2} />
-          </Link>
-        )}
+        <AdminBrand collapsed={collapsed} showClose={showClose} />
         {showClose ? (
           <button onClick={onMobileClose} className="flex h-7 w-7 items-center justify-center rounded-full border border-[#EDE7E2] text-[#9E8E85] hover:bg-[#FAF7F4]"><X size={13} strokeWidth={2} /></button>
-        ) : (
-          <button onClick={onToggle} className="hidden lg:flex h-7 w-7 items-center justify-center rounded-full border border-[#EDE7E2] text-[#9E8E85] hover:bg-[#FAF7F4] hover:text-[#1B1615] transition-all">
-            {collapsed ? <ChevronRight size={13} strokeWidth={2} /> : <ChevronLeft size={13} strokeWidth={2} />}
-          </button>
-        )}
+        ) : null}
       </div>
 
       {/* Nav */}
@@ -75,14 +99,10 @@ function SidebarInner({ collapsed, onToggle, onMobileClose, showClose }: Props &
 
       {/* Bottom */}
       <div className="shrink-0 border-t border-[#EDE7E2] px-3 py-3">
-        <Link href="/admin/settings" className={`group mb-0.5 flex items-center rounded-[10px] px-3 py-2.5 text-[13.5px] font-medium text-[#68625E] transition-all hover:bg-[#FAF7F4] hover:text-[#1B1615] ${collapsed && !showClose ? "justify-center" : "gap-2.5"}`}>
-          <Settings size={16} strokeWidth={2} className="text-[#9E8E85] group-hover:text-[#68625E]" />
-          {(!collapsed || showClose) && "Settings"}
-        </Link>
-        <Link href="/admin/login" className={`group flex items-center rounded-[10px] px-3 py-2.5 text-[13.5px] font-medium text-[#68625E] transition-all hover:bg-[#FFF5F5] hover:text-[#E2484D] ${collapsed && !showClose ? "justify-center" : "gap-2.5"}`}>
+        <button type="button" onClick={() => void handleLogout()} disabled={isLoggingOut} className={`group flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[13.5px] font-medium text-[#68625E] transition-all hover:bg-[#FFF5F5] hover:text-[#E2484D] disabled:cursor-wait disabled:opacity-60 ${collapsed && !showClose ? "justify-center" : "gap-2.5"}`}>
           <LogOut size={16} strokeWidth={2} className="text-[#9E8E85] group-hover:text-[#E2484D]" />
-          {(!collapsed || showClose) && "Logout"}
-        </Link>
+          {(!collapsed || showClose) && (isLoggingOut ? "Logging out..." : "Logout")}
+        </button>
       </div>
     </div>
   );

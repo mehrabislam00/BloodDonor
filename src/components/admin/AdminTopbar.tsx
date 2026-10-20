@@ -1,8 +1,10 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, Bell, Search, ChevronDown, User, LogOut, Settings, X } from "lucide-react";
-import Link from "next/link";
+import { Menu, Bell, Search, ChevronDown, LogOut, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "@/components/toast/ui/toast";
 
 const TITLES: Record<string, string> = {
   "/admin": "Dashboard",
@@ -12,11 +14,7 @@ const TITLES: Record<string, string> = {
   "/admin/settings": "Settings",
 };
 
-const NOTIFS = [
-  { id:1, text:"New report submitted for Farzana Akter", time:"2 min ago",  unread:true  },
-  { id:2, text:"Donor Samiul Karim flagged for review",  time:"15 min ago", unread:true  },
-  { id:3, text:"5 new donors registered today",          time:"1 hr ago",   unread:false },
-];
+type AdminNotification = { id: string; text: string; time: string | null; unread: boolean };
 
 function useOutside(ref: React.RefObject<HTMLElement>, cb: () => void) {
   useEffect(() => {
@@ -33,14 +31,46 @@ export function AdminTopbar({ collapsed, onMenuClick }: Props) {
   const [notifOpen,   setNotifOpen]   = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen,  setSearchOpen]  = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const router = useRouter();
   const notifRef   = useRef<HTMLDivElement>(null!);
   const profileRef = useRef<HTMLDivElement>(null!);
   useOutside(notifRef,   () => setNotifOpen(false));
   useOutside(profileRef, () => setProfileOpen(false));
 
   const title      = TITLES[pathname] ?? "Admin Panel";
-  const unread     = NOTIFS.filter(n => n.unread).length;
   const breadcrumb = pathname.split("/").filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1));
+  const loadNotifications = useCallback(async () => {
+    const response = await fetch("/api/admin/notifications", { cache: "no-store" });
+    if (response.ok) setNotifications((await response.json()).notifications ?? []);
+  }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadNotifications(), 0);
+    const interval = window.setInterval(() => void loadNotifications(), 15000);
+    return () => { window.clearTimeout(timer); window.clearInterval(interval); };
+  }, [loadNotifications]);
+
+  const unread = notifications.filter(n => n.unread).length;
+
+  async function handleLogout() {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      const { error } = await authClient.signOut();
+      if (error) {
+        toast.error({ title: "Logout failed", description: "We couldn't sign you out. Please try again." });
+        return;
+      }
+      toast.success({ title: "Logged out", description: "You have been successfully signed out." });
+      router.replace("/admin/login");
+      router.refresh();
+    } catch {
+      toast.error({ title: "Logout failed", description: "We couldn't sign you out. Please try again." });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
 
   return (
     <header className={`fixed top-0 right-0 z-20 flex h-[58px] items-center justify-between border-b border-[#EDE7E2] bg-white px-4 transition-all duration-300 left-0 ${collapsed ? "lg:left-[72px]" : "lg:left-[240px]"}`}>
@@ -78,15 +108,16 @@ export function AdminTopbar({ collapsed, onMenuClick }: Props) {
                 <p className="text-[13px] font-extrabold text-[#1B1615]">Notifications</p>
                 <span className="rounded-full bg-[#FFF0F0] px-2 py-0.5 text-[10.5px] font-bold text-[#E2484D]">{unread} new</span>
               </div>
-              {NOTIFS.map(n => (
-                <div key={n.id} className={`cursor-pointer px-4 py-3 hover:bg-[#FAF7F4] ${n.unread ? "bg-[#FFFDF9]" : ""}`}>
+              {notifications.length === 0 && <p className="px-4 py-6 text-center text-xs text-[#9E8E85]">No recent notifications.</p>}
+              {notifications.map(n => (
+                <button key={n.id} type="button" onClick={() => { setNotifications((items) => items.map((item) => item.id === n.id ? { ...item, unread: false } : item)); setNotifOpen(false); router.push("/admin/reports"); }} className={`block w-full cursor-pointer px-4 py-3 text-left hover:bg-[#FAF7F4] ${n.unread ? "bg-[#FFFDF9]" : ""}`}>
                   {n.unread && <span className="mb-1 inline-block h-1.5 w-1.5 rounded-full bg-[#E2484D]" />}
                   <p className="text-[12.5px] leading-relaxed text-[#1B1615]">{n.text}</p>
-                  <p className="mt-0.5 text-[11px] text-[#B5A89F]">{n.time}</p>
-                </div>
+                  <p className="mt-0.5 text-[11px] text-[#B5A89F]">{n.time ? new Date(n.time).toLocaleString() : "Recently"}</p>
+                </button>
               ))}
               <div className="border-t border-[#F0EAE5] px-4 py-2.5 text-center">
-                <button className="text-[12px] font-semibold text-[#E2484D] hover:text-[#C73E43]">Mark all as read</button>
+                <button onClick={() => setNotifications((items) => items.map((item) => ({ ...item, unread: false })))} className="text-[12px] font-semibold text-[#E2484D] hover:text-[#C73E43]">Mark all as read</button>
               </div>
             </div>
           )}
@@ -106,8 +137,8 @@ export function AdminTopbar({ collapsed, onMenuClick }: Props) {
                 <p className="text-[11.5px] text-[#9E8E85]">admin@blooddonor.com</p>
               </div>
               <div className="py-1.5">
-                {[{ icon:User, label:"Profile", red:false },{ icon:Settings, label:"Settings", red:false },{ icon:LogOut, label:"Logout", red:true }].map(({icon:Icon,label,red}) => (
-                  <button key={label} className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] transition-all ${red ? "text-[#E2484D] hover:bg-[#FFF5F5]" : "text-[#68625E] hover:bg-[#FAF7F4] hover:text-[#1B1615]"}`}>
+                {[{ icon:LogOut, label:"Logout", red:true }].map(({icon:Icon,label,red}) => (
+                  <button key={label} onClick={() => void handleLogout()} disabled={isLoggingOut} className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] transition-all disabled:cursor-wait disabled:opacity-60 ${red ? "text-[#E2484D] hover:bg-[#FFF5F5]" : "text-[#68625E] hover:bg-[#FAF7F4] hover:text-[#1B1615]"}`}>
                     <Icon size={13} strokeWidth={2} /> {label}
                   </button>
                 ))}

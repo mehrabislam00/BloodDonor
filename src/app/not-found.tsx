@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft, Home, Search, HeartHandshake, HelpCircle } from "lucide-react";
@@ -10,6 +10,10 @@ export default function NotFound() {
   const router = useRouter();
   const pathname = usePathname();
   const isAdminAccessBlocked = pathname === "/admin/login";
+
+  useEffect(() => {
+    document.title = "Page Not Found | BloodDonor";
+  }, []);
 
   const handleGoBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {

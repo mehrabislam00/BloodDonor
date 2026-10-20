@@ -42,6 +42,8 @@ void (async () => {
     await deletedUsersCollection.createIndex({ deletedAt: -1 });
     await deletedDonorsCollection.createIndex({ deletedAt: -1 });
     await deletedDonorsCollection.createIndex({ userId: 1 });
+    await database.collection("notifications").createIndex({ recipientId: 1, createdAt: -1 });
+    await database.collection("notifications").createIndex({ reportId: 1, createdAt: -1 });
   } catch {
     // Ignore index creation race conditions during startup.
   }

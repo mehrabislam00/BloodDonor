@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/layout/BrandLogo";
 import { Mail } from "lucide-react";
+import { SUPPORT_EMAIL } from "@/lib/support";
 
 const Footer = () => {
   return (
@@ -25,7 +26,7 @@ const Footer = () => {
 <div className="mt-4 flex items-center gap-2 text-[13.5px] text-[#9E8E85]">
   <Mail size={13} strokeWidth={2} className="shrink-0 text-[#C5B8B0]" />
   <a
-    href="mailto:support@blooddonor.com"
+    href={`mailto:${SUPPORT_EMAIL}`}
     className="
       font-medium text-[#68625E]
       underline underline-offset-2 decoration-[#DDD6D1]
@@ -35,7 +36,7 @@ const Footer = () => {
       focus-visible:outline-[#E2484D]
     "
   >
-    supportblooddonor@gmail.com
+    {SUPPORT_EMAIL}
   </a>
 </div>
           </div>
