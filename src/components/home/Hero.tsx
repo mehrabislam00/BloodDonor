@@ -86,7 +86,7 @@ const Hero = () => {
               </Link>
             </div>
 
-            {/* Community avatars — responsive */}
+            {/* Responsive design: The layout adjusts for different screen sizes, ensuring a good user experience on both mobile and desktop devices. */}
             <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2">
               <div className="flex -space-x-2">
                 <Image
