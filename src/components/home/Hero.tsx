@@ -86,32 +86,32 @@ const Hero = () => {
               </Link>
             </div>
 
-            {/* Community avatars */}
-            <div className="mt-10 flex items-center gap-3">
+            {/* Community avatars — responsive */}
+            <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2">
               <div className="flex -space-x-2">
                 <Image
                   src={person1}
                   alt="Donor"
                   width={36}
                   height={36}
-                  className="h-9 w-9 rounded-full border-2 border-[#F3A5A8] object-cover object-[50%_40%]"
+                  className="h-8 w-8 rounded-full border-2 border-[#F3A5A8] object-cover object-[50%_40%] sm:h-9 sm:w-9"
                 />
                 <Image
                   src={person2}
                   alt="Donor"
                   width={36}
                   height={36}
-                  className="h-9 w-9 rounded-full border-2 border-[#F3A5A8] object-cover object-[50%_35%]"
+                  className="h-8 w-8 rounded-full border-2 border-[#F3A5A8] object-cover object-[50%_35%] sm:h-9 sm:w-9"
                 />
                 <Image
                   src={person3}
                   alt="Donor"
                   width={36}
                   height={36}
-                  className="h-9 w-9 rounded-full border-2 border-[#F3A5A8] object-cover object-[50%_35%]"
+                  className="h-8 w-8 rounded-full border-2 border-[#F3A5A8] object-cover object-[50%_35%] sm:h-9 sm:w-9"
                 />
               </div>
-              <p className="text-md text-[#68625E]">
+              <p className="text-sm leading-snug text-[#68625E] sm:text-base">
                 Local donors ready to help when it matters most
               </p>
             </div>
