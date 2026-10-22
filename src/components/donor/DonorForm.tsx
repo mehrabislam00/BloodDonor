@@ -556,7 +556,7 @@ const DonorForm = () => {
           ))}
         </div>
         <Link
-          href="/"
+          href="/blood-donor-profile"
           className="mt-7 flex h-[48px] items-center gap-2 rounded-[12px] bg-[#E2484D] px-8 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(226,72,77,0.22)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#D83E43]"
         >
           View Donor Dashboard <ArrowRight size={16} />
